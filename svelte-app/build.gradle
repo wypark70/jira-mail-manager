@@ -1,0 +1,27 @@
+plugins {
+    id 'com.github.node-gradle.node' version '3.5.1'
+}
+
+node {
+    version = '23.11.0'
+    download = true
+    workDir = layout.buildDirectory.dir("nodejs").get().asFile
+    npmWorkDir = layout.buildDirectory.dir("npm").get().asFile
+}
+
+tasks.register('install', NpmTask) {
+    description = 'npm 의존성 설치'
+    args = ['install']
+}
+
+tasks.register('build', NpmTask) {
+    description = 'Svelte 프론트엔드 빌드'
+    args = ['run', 'build']
+    dependsOn install
+}
+
+tasks.register('dev', NpmTask) {
+    description = 'Svelte 개발 서버 실행'
+    args = ['run', 'dev']
+    dependsOn install
+}

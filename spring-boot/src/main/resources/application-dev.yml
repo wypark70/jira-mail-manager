@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: mail-manager
+  datasource:
+    driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    url: jdbc:log4jdbc:h2:file:./data/mail-manager
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: false
+  data:
+    rest:
+      base-path: /data/rest
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: false
+  groovy:
+    template:
+      check-template-location: true
+      prefix: classpath:/templates/
+      suffix: .gsp
+      cache: false
+
+# SMTP 접근 제어 설정 추가
+mail:
+  smtp:
+    allowed.ips: 127.0.0.1,192.168.0.10
+    allowed.domains: localhost,kubernetes.docker.internal
+
+logging:
+  level:
+    jdbc:
+      sqlonly: INFO     # SQL 쿼리만 로깅
+      sqltiming: INFO   # SQL 쿼리와 실행 시간을 로깅
+      resultsettable: INFO  # 쿼리 결과를 테이블 형태로 로깅
+      audit: WARN       # 주요 JDBC 호출 정보를 로깅
+      resultset: OFF    # ResultSet을 로깅하지 않음
+      connection: WARN  # 커넥션 연결/종료 로깅

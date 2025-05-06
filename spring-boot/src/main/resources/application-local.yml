@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: mail-manager
+  datasource:
+    driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    url: jdbc:log4jdbc:h2:file:./spring-boot/data/mail-manager;AUTO_SERVER=TRUE
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: false
+  data:
+    rest:
+      base-path: /api/data
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: false
+  groovy:
+    template:
+      check-template-location: true
+      prefix: classpath:/templates/
+      suffix: .gsp
+      cache: false
+  devtools:
+    restart:
+      enabled: false
+    livereload:
+      enabled: false
+
+# SMTP 접근 제어 설정 추가
+mail:
+  smtp:
+    allowed.ips: 127.0.0.1,192.168.0.10
+    allowed.domains: localhost,kubernetes.docker.internal
+  batch:
+    batch-size: 10
+    lock-timeout-minutes: 10
+    retry-delay-minutes: 15
+
+logging:
+  level:
+    jdbc:
+      sqlonly: INFO
+      sqltiming: OFF
+      resultsettable: OFF
+      audit: OFF
+      resultset: OFF
+      connection: OFF

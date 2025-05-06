@@ -1,0 +1,64 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.4.5'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.samsungds.ims'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.subethamail:subethasmtp:3.1.7'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-data-rest'
+    implementation 'org.springframework.boot:spring-boot-starter-groovy-templates'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.data:spring-data-rest-hal-explorer'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    compileOnly 'org.projectlombok:lombok'
+    // developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    implementation 'com.h2database:h2'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'io.projectreactor:reactor-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+/*
+// 프론트엔드 빌드 결과물을 백엔드 정적 리소스 폴더로 복사
+tasks.register('copyFrontendBuildFiles', Copy) {
+    dependsOn 'buildFrontend'
+    from "../svelte-app/build"
+    into "${projectDir}/src/main/resources/static"
+}
+
+// 백엔드 빌드 전에 프론트엔드 파일 복사 작업 실행
+tasks.named('processResources') {
+    // 테스트 실행이 아닌 경우에만 프론트엔드 빌드에 의존
+    if (!gradle.startParameter.taskNames.any { it.toLowerCase().contains('test') }) {
+        dependsOn 'copyFrontendBuildFiles'
+    }
+}*/
