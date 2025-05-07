@@ -1,7 +1,6 @@
 package com.samsungds.ims.mail;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -19,13 +18,15 @@ public class SmtpMailTests {
     @Test
     void TestSend() {
         try {
-            // 테스트 이메일 발송
-            sendTestEmail(
-                    "sender@example.com",
-                    "recipient@example.com",
-                    "테스트 이메일",
-                    "이것은 테스트 이메일입니다."
-            );
+            for (int i = 0; i < 10; i++) {
+                // 테스트 이메일 발송
+                sendTestEmail(
+                        "sender" + i + "@example.com",
+                        "recipient" + i + "@example.com",
+                        "테스트 이메일 #" + i,
+                        "이것은 테스트 이메일입니다.\n" + i + "번째 메일입니다."
+                );
+            }
         } catch (MessagingException e) {
             System.out.println("이메일 발송 실패: " + e.getMessage());
             e.printStackTrace();

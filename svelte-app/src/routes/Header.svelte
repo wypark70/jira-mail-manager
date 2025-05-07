@@ -1,9 +1,7 @@
 <script lang="ts">
-	import { base } from '$app/paths';
 	import { page } from '$app/state';
 	import logo from '$lib/images/svelte-logo.svg';
 	import github from '$lib/images/github.svg';
-	import ModeSwitch from "$lib/components/ModeSwitch.svelte";
 </script>
 
 <header>
@@ -18,17 +16,14 @@
 			<path d="M0,0 L1,2 C1.5,3 1.5,3 2,3 L2,0 Z" />
 		</svg>
 		<ul>
-			<li aria-current={page.url.pathname === '{base}/' ? 'page' : undefined}>
-				<a href="{base}/">Home</a>
+			<li aria-current={page.url.pathname === '/' ? 'page' : undefined}>
+				<a href="/">Home</a>
 			</li>
-			<li aria-current={page.url.pathname === '{base}/server' ? 'page' : undefined}>
-				<a href="{base}/server">Server</a>
+			<li aria-current={page.url.pathname === '/about' ? 'page' : undefined}>
+				<a href="/about">About</a>
 			</li>
-			<li aria-current={page.url.pathname === '{base}/email' ? 'page' : undefined}>
-				<a href="{base}/email">Email</a>
-			</li>
-			<li aria-current={page.url.pathname === '{base}/about' ? 'page' : undefined}>
-				<a href="{base}/about">About</a>
+			<li aria-current={page.url.pathname.startsWith('/sverdle') ? 'page' : undefined}>
+				<a href="/sverdle">Sverdle</a>
 			</li>
 		</ul>
 		<svg viewBox="0 0 2 3" aria-hidden="true">
@@ -37,7 +32,6 @@
 	</nav>
 
 	<div class="corner">
-		<ModeSwitch></ModeSwitch>
 		<a href="https://github.com/sveltejs/kit">
 			<img src={github} alt="GitHub" />
 		</a>
@@ -51,13 +45,8 @@
 	}
 
 	.corner {
-		display: flex;
-		gap: 5px;
+		width: 3em;
 		height: 3em;
-		flex-direction: row;
-		flex-wrap: nowrap;
-		justify-content: flex-end;
-		align-items: center;
 	}
 
 	.corner a {
