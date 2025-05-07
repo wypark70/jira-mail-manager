@@ -11,6 +11,12 @@ const dirname =
 // More info at: https://storybook.js.org/docs/writing-tests/test-addon
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
+	server: {
+		fs: {
+			allow: ['.']
+		}
+	},
+	publicDir: 'static',
 	test: {
 		workspace: [
 			{
