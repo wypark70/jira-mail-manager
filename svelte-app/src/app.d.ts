@@ -8,6 +8,14 @@ declare global {
 		// interface PageState {}
 		// interface Platform {}
 	}
+	interface Mail {
+		id: number;
+		recipient: string;
+		subject: string;
+		body: string;
+		createdAt: string; // 또는 Date
+		sentAt: string | null; // 또는 Date | null
+	}
 }
 
 export {};
