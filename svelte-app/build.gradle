@@ -5,8 +5,8 @@ plugins {
 node {
     version = '23.11.0'
     download = true
-    workDir = layout.buildDirectory.dir("nodejs").get().asFile
-    npmWorkDir = layout.buildDirectory.dir("npm").get().asFile
+    workDir = file("${projectDir}/nodejs")
+    npmWorkDir = file("${projectDir}/nodejs/npm/node-v23.11.0-win-x64")
 }
 
 tasks.register('install', NpmTask) {
@@ -24,4 +24,11 @@ tasks.register('dev', NpmTask) {
     description = 'Svelte 개발 서버 실행'
     args = ['run', 'dev']
     dependsOn install
+}
+
+tasks.register('clean') {
+    doLast {
+        delete "${projectDir}/build"
+        delete "${projectDir}/.svelte-kit"
+    }
 }

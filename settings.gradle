@@ -1,3 +1,3 @@
 rootProject.name = 'jira-mail-manager'
 
-include 'jira-mail-manager-backend', 'jira-mail-manager-frontend'
+include 'spring-boot', 'svelte-app'

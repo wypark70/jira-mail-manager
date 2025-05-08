@@ -1,7 +1,7 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.4.5'
-    id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.springframework.boot' version '3.2.3'
+    id 'io.spring.dependency-management' version '1.1.4'
 }
 
 group = 'com.samsungds.ims'
@@ -47,10 +47,9 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-/*
 // 프론트엔드 빌드 결과물을 백엔드 정적 리소스 폴더로 복사
 tasks.register('copyFrontendBuildFiles', Copy) {
-    dependsOn 'buildFrontend'
+    dependsOn ':svelte-app:build'
     from "../svelte-app/build"
     into "${projectDir}/src/main/resources/static"
 }
@@ -61,4 +60,12 @@ tasks.named('processResources') {
     if (!gradle.startParameter.taskNames.any { it.toLowerCase().contains('test') }) {
         dependsOn 'copyFrontendBuildFiles'
     }
-}*/
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+bootRun {
+    systemProperty "file.encoding", "UTF-8"
+}

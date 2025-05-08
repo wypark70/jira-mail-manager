@@ -1,0 +1,7 @@
+// index.js - 모든 컴포넌트를 가져오는 진입점
+import {EmailCrudManager} from './email/EmailCrudManager.js';
+import {ServerStatus} from './server/ServerStatus.js';
+
+// 각 컴포넌트가 이미 customElements.define()을 포함하고 있으므로
+// 여기서는 추가 작업이 필요 없습니다.
+// 이 파일은 단순히 모든 컴포넌트를 불러오는 역할을 합니다.
