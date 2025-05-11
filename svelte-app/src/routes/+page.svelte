@@ -30,7 +30,7 @@
 
 	<!-- 통계 카드 -->
 	<div class="mb-8">
-		<StatisticsCards {stats} />
+		<StatisticsCards />
 	</div>
 
 	<!-- 빠른 액션 버튼 -->

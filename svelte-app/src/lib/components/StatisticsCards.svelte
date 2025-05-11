@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
 
-    export let stats: {
+    interface Stats {
         queuedCount: number;
         processingCount: number;
         sentCount: number;
@@ -10,6 +10,16 @@
         scheduledCount: number;
         totalCount: number;       
     };
+
+    let stats = $state<Stats>({
+        queuedCount: 0,
+        processingCount: 0,
+        sentCount: 0,
+        failedCount: 0,
+        retryCount: 0,
+        scheduledCount: 0,
+        totalCount: 0
+    });
 
     const MAX_RETRIES = 5;
     let retryCount = 0;

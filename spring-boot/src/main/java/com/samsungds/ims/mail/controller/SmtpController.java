@@ -10,6 +10,7 @@ import reactor.core.publisher.Flux;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
 
 @RestController
 @RequestMapping("/api/smtp")
@@ -26,6 +27,8 @@ public class SmtpController {
     @GetMapping(path = "/logs", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<Flux<LogMessage>> streamLogs() {
         return ResponseEntity.ok()
+                .header(HttpHeaders.CACHE_CONTROL, "no-cache")
+                .header(HttpHeaders.CONNECTION, "keep-alive")
                 .body(logService.getLogStream());
     }
 

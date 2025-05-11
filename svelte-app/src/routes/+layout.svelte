@@ -1,8 +1,18 @@
 <script lang="ts">
 	import Header from './Header.svelte';
 	import '../app.css';
+	import { onMount, onDestroy } from 'svelte';
+	import { sseStore } from '$lib/stores/sseStore';
 
 	let { children } = $props();
+
+	onMount(() => {
+		sseStore.connect();
+	});
+
+	onDestroy(() => {
+		sseStore.disconnect();
+	});
 </script>
 
 <div class="app">
@@ -18,6 +28,7 @@
 		</p>
 	</footer>
 </div>
+
 
 <style>
 	.app {
