@@ -1,11 +1,11 @@
 package com.samsungds.ims.mail.handler;
 
 import com.samsungds.ims.mail.model.EmailQueue;
-import com.samsungds.ims.mail.model.EmailRecipient;
-import com.samsungds.ims.mail.model.EmailContent;
+import com.samsungds.ims.mail.model.EmailQueueRecipient;
+import com.samsungds.ims.mail.model.EmailQueueContent;
 import com.samsungds.ims.mail.repository.EmailQueueRepository;
-import com.samsungds.ims.mail.repository.EmailRecipientRepository;
-import com.samsungds.ims.mail.repository.EmailContentRepository;
+import com.samsungds.ims.mail.repository.EmailQueueRecipientRepository;
+import com.samsungds.ims.mail.repository.EmailQueueContentRepository;
 
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +25,8 @@ import java.util.Properties;
 public class SmtpMessageHandler implements MessageHandler {
 
     private final EmailQueueRepository emailQueueRepository;
-    private final EmailRecipientRepository emailRecipientRepository;
-    private final EmailContentRepository emailContentRepository;
+    private final EmailQueueRecipientRepository emailQueueRecipientRepository;
+    private final EmailQueueContentRepository EmailQueueContentRepository;
 
     private String from;
     private String to;
@@ -64,21 +64,21 @@ public class SmtpMessageHandler implements MessageHandler {
                     EmailQueue savedQueue = emailQueueRepository.save(newQueue);
 
                     // 본문 저장
-                    EmailContent content = new EmailContent();
+                    EmailQueueContent content = new EmailQueueContent();
                     content.setBody(body);
                     content.setEmailQueue(savedQueue);
-                    emailContentRepository.save(content);
+                    EmailQueueContentRepository.save(content);
 
                     return savedQueue;
                 });
 
             // 수신자가 존재하지 않는 경우에만 추가
-            if (!emailRecipientRepository.existsByEmailAndEmailQueue(to, emailQueue)) {
-                EmailRecipient recipient = new EmailRecipient();
+            if (!emailQueueRecipientRepository.existsByEmailAndEmailQueue(to, emailQueue)) {
+                EmailQueueRecipient recipient = new EmailQueueRecipient();
                 recipient.setEmail(to);
-                recipient.setType(EmailRecipient.RecipientType.TO);
+                recipient.setType(EmailQueueRecipient.RecipientType.TO);
                 recipient.setEmailQueue(emailQueue);
-                emailRecipientRepository.save(recipient);
+                emailQueueRecipientRepository.save(recipient);
                 log.info("새로운 수신자 추가: {} (제목: {}, 발신자: {})", to, subject, from);
             } else {
                 log.info("이미 존재하는 수신자: {} (제목: {}, 발신자: {})", to, subject, from);

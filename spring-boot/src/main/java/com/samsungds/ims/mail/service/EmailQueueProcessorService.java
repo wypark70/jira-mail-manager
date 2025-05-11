@@ -228,31 +228,48 @@ public class EmailQueueProcessorService implements SmartLifecycle {
      * 실제 이메일 발송 처리
      */
     private void sendEmail(EmailQueue emailQueue) throws Exception {
-        // 실제 구현에서는 여기서 이메일 발송 로직 실행
-        // 테스트를 위한 지연 추가 (실제 구현에서는 제거)
-        Thread.sleep(1000);  // 이메일 발송에 1초 소요된다고 가정
-        
-        /*MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-        
-        helper.setFrom(emailQueue.getSender());
-        helper.setTo(emailQueue.getRecipient());
-        helper.setSubject(emailQueue.getSubject());
-        helper.setText(emailQueue.getBody(), true); // HTML 지원
-        
-        // CC 및 BCC 설정
-        if (emailQueue.getCc() != null && !emailQueue.getCc().isEmpty()) {
-            helper.setCc(emailQueue.getCc().split(","));
+        try {
+            // 1-20초 사이의 임의 시간 생성
+            int processingTime = (int)(Math.random() * 20 + 1) * 1000;  // milliseconds
+
+            // 처리 시간이 15초를 초과하면 실패로 처리
+            if (processingTime > 15000) {
+                emailQueue.incrementRetry(); // retryCount 증가
+                emailQueueRepository.save(emailQueue); // DB에 재시도 횟수 저장
+                log.warn("이메일 ID {} 처리 시간 초과: {}초 (재시도 횟수: {})", 
+                    emailQueue.getId(), 
+                    processingTime/1000, 
+                    emailQueue.getRetryCount());
+                throw new Exception(String.format("처리 시간(%d초)이 15초 제한을 초과했습니다", processingTime/1000));
+            }
+
+            // 50% 확률로 추가 실패 발생
+            if (Math.random() < 0.5) {
+                emailQueue.incrementRetry(); // retryCount 증가
+                emailQueueRepository.save(emailQueue); // DB에 재시도 횟수 저장
+                log.warn("이메일 ID {} 발송 실패 (재시도 횟수: {})", 
+                    emailQueue.getId(), 
+                    emailQueue.getRetryCount());
+                throw new Exception("50% 확률로 발생한 의도적인 발송 실패");
+            }
+
+            // 실제 처리 시간만큼 대기
+            Thread.sleep(processingTime);
+            log.info("이메일 ID {} 발송 소요시간: {}초", emailQueue.getId(), processingTime/1000);
+            
+            /*MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            
+            // ...existing code...
+            
+            // 이메일 발송
+            mailSender.send(message);*/
+
+        } catch (Exception e) {
+            emailQueue.incrementRetry(); // retryCount 증가
+            emailQueueRepository.save(emailQueue); // DB에 재시도 횟수 저장
+            throw e;
         }
-        
-        if (emailQueue.getBcc() != null && !emailQueue.getBcc().isEmpty()) {
-            helper.setBcc(emailQueue.getBcc().split(","));
-        }
-        
-        // 첨부 파일 처리 (구현 필요)
-        
-        // 이메일 발송
-        mailSender.send(message);*/
     }
 
     /**

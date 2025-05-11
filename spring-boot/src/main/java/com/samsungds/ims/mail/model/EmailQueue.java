@@ -22,11 +22,11 @@ public class EmailQueue {
 
     // 본문 관계 설정
     @OneToOne(mappedBy = "emailQueue", cascade = CascadeType.ALL)
-    private EmailContent content;
+    private EmailQueueContent content;
 
     // 수신자 관계 설정
     @OneToMany(mappedBy = "emailQueue", cascade = CascadeType.ALL)
-    private List<EmailRecipient> recipients;
+    private List<EmailQueueRecipient> recipients;
 
     // 첨부 파일 경로 (쉼표로 구분된 목록)
     private String attachments;
@@ -119,11 +119,11 @@ public class EmailQueue {
     }
 
     // 편의 메서드: 수신자 추가
-    public void addRecipient(String email, EmailRecipient.RecipientType type) {
+    public void addRecipient(String email, EmailQueueRecipient.RecipientType type) {
         if (recipients == null) {
             recipients = new ArrayList<>();
         }
-        EmailRecipient recipient = new EmailRecipient();
+        EmailQueueRecipient recipient = new EmailQueueRecipient();
         recipient.setEmail(email);
         recipient.setType(type);
         recipient.setEmailQueue(this);
@@ -131,8 +131,8 @@ public class EmailQueue {
     }
 
     // 편의 메서드: 본문 설정
-    public void setEmailContent(String body) {
-        EmailContent newContent = new EmailContent();
+    public void setContent(String body) {
+        EmailQueueContent newContent = new EmailQueueContent();
         newContent.setBody(body);
         newContent.setEmailQueue(this);
         this.content = newContent;

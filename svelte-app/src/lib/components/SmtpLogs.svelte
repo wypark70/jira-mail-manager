@@ -40,7 +40,7 @@
     });
 </script>
 
-<div class="flex flex-col h-full">
+<div class="flex flex-col h-[80vh]">
     <div class="flex justify-between items-center mb-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-t">
         <h3 class="text-lg font-medium text-gray-800 dark:text-gray-100">SMTP 서버 로그</h3>
         <div class="flex items-center space-x-2">
@@ -59,7 +59,7 @@
         bind:this={logContainer}
         on:scroll={handleScroll}
         class="flex-1 overflow-auto bg-white dark:bg-gray-900 p-4 font-mono text-sm rounded-b border border-gray-200 dark:border-gray-700"
-        style="max-height: 500px;"
+        style="height: calc(80vh - 3rem); min-height: 200px;"
     >
         {#each logs as log}
             <div class="mb-1 {log.level.toLowerCase() === 'error' ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}">

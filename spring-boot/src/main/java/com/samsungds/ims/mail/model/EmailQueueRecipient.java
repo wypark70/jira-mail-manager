@@ -2,26 +2,28 @@ package com.samsungds.ims.mail.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Data
-@Table(name = "email_contents")
-public class EmailContent {
+@Table(name = "email_queue_recipients")
+public class EmailQueueRecipient {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 10000)
-    private String body;        // 본문
+    private String email;      // 수신자 이메일
 
-    @CreationTimestamp
-    private LocalDateTime createdAt;
+    @Enumerated(EnumType.STRING)
+    private RecipientType type; // TO, CC, BCC
 
     // 이메일 큐와의 관계
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "email_queue_id")
     private EmailQueue emailQueue;
+
+    public enum RecipientType {
+        TO,
+        CC,
+        BCC
+    }
 }

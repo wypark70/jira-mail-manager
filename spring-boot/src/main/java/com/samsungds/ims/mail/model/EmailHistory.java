@@ -1,0 +1,40 @@
+package com.samsungds.ims.mail.model;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Data
+@Table(name = "email_history")
+public class EmailHistory {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private Long originalEmailId;  // 원본 이메일 ID
+    private String sender;         // 발신자
+    private String subject;        // 제목
+    private String processorId;    // 처리한 프로세서 ID
+    private String errorMessage;   // 오류 메시지
+    private int retryCount;       // 재시도 횟수
+    
+    @Enumerated(EnumType.STRING)
+    private EmailQueue.EmailStatus status;  // 최종 상태
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;  // 히스토리 생성 시간
+    private LocalDateTime sentAt;     // 실제 발송 시간
+
+    // 본문 관계 설정
+    @OneToOne(mappedBy = "emailHistory", cascade = CascadeType.ALL)
+    private EmailHistoryContent content;
+
+    // 수신자 관계 설정
+    @OneToMany(mappedBy = "emailHistory", cascade = CascadeType.ALL)
+    private List<EmailHistoryRecipient> recipients = new ArrayList<>();
+}
