@@ -1,5 +1,7 @@
 <script lang="ts">
+	import BatchProcessorStatus from '$lib/components/BatchProcessorStatus.svelte';
 	import SmtpServerStatus from '$lib/components/SmtpServerStatus.svelte';
+	import StatisticsCards from '$lib/components/StatisticsCards.svelte';
 
 	// 대시보드에 필요한 데이터 (실제 데이터와 연동 필요)
 	let stats = {
@@ -21,83 +23,14 @@
 		<SmtpServerStatus />
 	</div>
 
+	<!-- 배치 프로세서 상태 -->
+	<div class="mb-8">
+		<BatchProcessorStatus />
+	</div>
+
 	<!-- 통계 카드 -->
-	<div class="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-		<div class="rounded-lg bg-white p-6 shadow-md">
-			<div class="flex items-center">
-				<div class="rounded-full bg-blue-100 p-3 text-blue-500">
-					<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-						/>
-					</svg>
-				</div>
-				<div class="ml-4">
-					<h2 class="text-sm text-gray-600">총 메일</h2>
-					<p class="text-2xl font-semibold text-gray-800">{stats.totalMails}</p>
-				</div>
-			</div>
-		</div>
-
-		<div class="rounded-lg bg-white p-6 shadow-md">
-			<div class="flex items-center">
-				<div class="rounded-full bg-yellow-100 p-3 text-yellow-500">
-					<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-						/>
-					</svg>
-				</div>
-				<div class="ml-4">
-					<h2 class="text-sm text-gray-600">대기 중</h2>
-					<p class="text-2xl font-semibold text-gray-800">{stats.pendingMails}</p>
-				</div>
-			</div>
-		</div>
-
-		<div class="rounded-lg bg-white p-6 shadow-md">
-			<div class="flex items-center">
-				<div class="rounded-full bg-green-100 p-3 text-green-500">
-					<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M5 13l4 4L19 7"
-						/>
-					</svg>
-				</div>
-				<div class="ml-4">
-					<h2 class="text-sm text-gray-600">발송 완료</h2>
-					<p class="text-2xl font-semibold text-gray-800">{stats.sentMails}</p>
-				</div>
-			</div>
-		</div>
-
-		<div class="rounded-lg bg-white p-6 shadow-md">
-			<div class="flex items-center">
-				<div class="rounded-full bg-red-100 p-3 text-red-500">
-					<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-						/>
-					</svg>
-				</div>
-				<div class="ml-4">
-					<h2 class="text-sm text-gray-600">실패</h2>
-					<p class="text-2xl font-semibold text-gray-800">{stats.failedMails}</p>
-				</div>
-			</div>
-		</div>
+	<div class="mb-8">
+		<StatisticsCards {stats} />
 	</div>
 
 	<!-- 빠른 액션 버튼 -->

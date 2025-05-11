@@ -260,7 +260,7 @@ public class EmailQueueProcessorService implements SmartLifecycle {
      */
     public EmailQueueStats getQueueStats() {
         EmailQueueStats stats = new EmailQueueStats();
-
+        stats.setTotalCount(emailQueueRepository.count());
         stats.setQueuedCount(emailQueueRepository.findByStatus(EmailQueue.EmailStatus.QUEUED).size());
         stats.setProcessingCount(emailQueueRepository.findByStatus(EmailQueue.EmailStatus.PROCESSING).size());
         stats.setSentCount(emailQueueRepository.findByStatus(EmailQueue.EmailStatus.SENT).size());
@@ -355,5 +355,6 @@ public class EmailQueueProcessorService implements SmartLifecycle {
         private int failedCount;
         private int retryCount;
         private int scheduledCount;
+        private long totalCount;
     }
 }

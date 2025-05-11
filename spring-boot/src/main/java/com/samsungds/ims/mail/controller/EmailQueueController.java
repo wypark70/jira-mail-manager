@@ -8,12 +8,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.MediaType;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @RestController
 @RequestMapping("/api/email-queue")
@@ -23,6 +27,7 @@ public class EmailQueueController {
 
     private final EmailQueueRepository emailQueueRepository;
     private final EmailQueueProcessorService emailQueueProcessorService;
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     /**
      * 이메일 큐에 새 이메일 추가
@@ -103,6 +108,38 @@ public class EmailQueueController {
     public ResponseEntity<EmailQueueProcessorService.EmailQueueStats> getQueueStats() {
         EmailQueueProcessorService.EmailQueueStats stats = emailQueueProcessorService.getQueueStats();
         return ResponseEntity.ok(stats);
+    }
+
+    /**
+     * 실시간 통계 스트림 제공
+     */
+    @GetMapping(path = "/stats/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamStats() {
+        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
+        
+        // 연결 시작 시 초기 데이터 전송
+        try {
+            EmailQueueProcessorService.EmailQueueStats stats = emailQueueProcessorService.getQueueStats();
+            emitter.send(stats);
+        } catch (Exception e) {
+            emitter.completeWithError(e);
+            return emitter;
+        }
+
+        // 백그라운드에서 주기적으로 통계 업데이트
+        executorService.execute(() -> {
+            try {
+                while (true) {
+                    Thread.sleep(5000); // 5초 대기
+                    EmailQueueProcessorService.EmailQueueStats stats = emailQueueProcessorService.getQueueStats();
+                    emitter.send(stats);
+                }
+            } catch (Exception e) {
+                emitter.completeWithError(e);
+            }
+        });
+        
+        return emitter;
     }
 
     /**
