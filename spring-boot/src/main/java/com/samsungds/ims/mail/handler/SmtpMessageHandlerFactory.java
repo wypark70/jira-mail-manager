@@ -1,6 +1,8 @@
 package com.samsungds.ims.mail.handler;
 
 import com.samsungds.ims.mail.repository.EmailQueueRepository;
+import com.samsungds.ims.mail.repository.EmailRecipientRepository;
+import com.samsungds.ims.mail.repository.EmailContentRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,8 @@ import java.util.List;
 public class SmtpMessageHandlerFactory implements MessageHandlerFactory {
 
     private final EmailQueueRepository emailQueueRepository;
+    private final EmailRecipientRepository emailRecipientRepository;
+    private final EmailContentRepository emailContentRepository;
     @Value("${mail.smtp.allowed.ips:127.0.0.1}")
     private List<String> allowedIps; // 허용된 IP 목록
     @Value("${mail.smtp.allowed.domains:localhost}")
@@ -53,7 +57,11 @@ public class SmtpMessageHandlerFactory implements MessageHandlerFactory {
 
         // 연결이 허용된 경우 메시지 핸들러 반환
         log.info("허용된 클라이언트 IP: {}, 도메인: {}", clientIp, domain);
-        return new SmtpMessageHandler(emailQueueRepository, clientIp);
+        return new SmtpMessageHandler(
+            emailQueueRepository,
+            emailRecipientRepository,
+            emailContentRepository
+        );
     }
 
     /**

@@ -198,6 +198,72 @@ public class EmailQueueController {
     }
 
     /**
+     * 배치 프로세서 시작
+     */
+    @PostMapping("/processor/start")
+    public ResponseEntity<Map<String, Object>> startProcessor() {
+        Map<String, Object> response = new HashMap<>();
+        
+        if (emailQueueProcessorService.isRunning()) {
+            response.put("success", false);
+            response.put("message", "배치 프로세서가 이미 실행 중입니다.");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        try {
+            emailQueueProcessorService.start();
+            EmailQueueProcessorService.ProcessorStatus status = emailQueueProcessorService.getProcessorStatus();
+            
+            response.put("success", true);
+            response.put("message", "배치 프로세서가 시작되었습니다.");
+            response.put("processorId", status.getProcessorId());
+            response.put("startedAt", status.getStartedAt());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "배치 프로세서 시작 중 오류 발생: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
+    /**
+     * 배치 프로세서 종료
+     */
+    @PostMapping("/processor/stop")
+    public ResponseEntity<Map<String, Object>> stopProcessor() {
+        Map<String, Object> response = new HashMap<>();
+        
+        if (!emailQueueProcessorService.isRunning()) {
+            response.put("success", false);
+            response.put("message", "배치 프로세서가 이미 중지된 상태입니다.");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        try {
+            emailQueueProcessorService.stop();
+            
+            response.put("success", true);
+            response.put("message", "배치 프로세서가 중지되었습니다.");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "배치 프로세서 중지 중 오류 발생: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
+    /**
+     * 배치 프로세서 상태 조회
+     */
+    @GetMapping("/processor/status")
+    public ResponseEntity<EmailQueueProcessorService.ProcessorStatus> getProcessorStatus() {
+        EmailQueueProcessorService.ProcessorStatus status = emailQueueProcessorService.getProcessorStatus();
+        return ResponseEntity.ok(status);
+    }
+
+    /**
      * 특정 날짜 범위의 이메일 조회
      */
     @GetMapping("/range")

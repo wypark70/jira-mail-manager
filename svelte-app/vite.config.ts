@@ -25,7 +25,9 @@ export default defineConfig({
 			},
 		},
 	},
-	publicDir: 'static',
+	build: {
+		target: 'esnext' // Change target to esnext to support top-level await
+	},
 	test: {
 		workspace: [
 			{

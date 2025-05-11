@@ -3,6 +3,7 @@ package com.samsungds.ims.mail.service;
 
 import com.samsungds.ims.mail.model.EmailQueue;
 import com.samsungds.ims.mail.repository.EmailQueueRepository;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.SmartLifecycle;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,10 +22,11 @@ import java.net.InetAddress;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class EmailQueueProcessorService {
+public class EmailQueueProcessorService implements SmartLifecycle {
 
     private final EmailQueueRepository emailQueueRepository;
     private final String processorId = generateProcessorId(); // 서비스 인스턴스마다 고유 ID
+    private volatile boolean running = false;
 
     // processorId 생성 방법
     private String generateProcessorId() {
@@ -43,12 +46,51 @@ public class EmailQueueProcessorService {
     @Value("${mail.batch.retry-delay-minutes:15}")
     private int retryDelayMinutes;
 
+    // SmartLifecycle 구현
+    @Override
+    public void start() {
+        log.info("이메일 큐 프로세서 시작 - 프로세서 ID: {}", processorId);
+        running = true;
+    }
+
+    @Override
+    public void stop() {
+        log.info("이메일 큐 프로세서 종료 - 프로세서 ID: {}", processorId);
+        running = false;
+    }
+
+    @Override
+    public boolean isRunning() {
+        return running;
+    }
+
+    @Override
+    public boolean isAutoStartup() {
+        return true;
+    }
+
+    @Override
+    public void stop(Runnable callback) {
+        stop();
+        callback.run();
+    }
+
+    @Override
+    public int getPhase() {
+        return 0;
+    }
+
     /**
      * 대기 중인 이메일 처리 (1분마다 실행)
      */
     @Scheduled(fixedDelay = 60000)
     @Transactional
     public void processEmailQueue() {
+        if (!running) {
+            log.debug("이메일 큐 프로세서가 실행 중이 아닙니다.");
+            return;
+        }
+
         log.info("이메일 큐 처리 시작, 프로세서 ID: {}", processorId);
 
         try {
@@ -282,6 +324,25 @@ public class EmailQueueProcessorService {
         emailQueueRepository.save(email);
         log.info("이메일 ID {}의 상태가 성공적으로 변경되었습니다.", emailId);
         return true;
+    }
+
+    /**
+     * 배치 프로세서의 현재 상태 조회
+     */
+    public ProcessorStatus getProcessorStatus() {
+        return ProcessorStatus.builder()
+                .processorId(processorId)
+                .running(running)
+                .startedAt(LocalDateTime.now())
+                .build();
+    }
+
+    @Getter
+    @Builder
+    public static class ProcessorStatus {
+        private final String processorId;
+        private final boolean running;
+        private final LocalDateTime startedAt;
     }
 
     // 이메일 큐 통계 클래스

@@ -10,7 +10,6 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.util.Properties;
 
-
 public class SmtpMailTests {
     private static final String SMTP_HOST = "localhost";
     private static final int SMTP_PORT = 25;
@@ -24,8 +23,15 @@ public class SmtpMailTests {
                         "sender" + i + "@example.com",
                         "recipient" + i + "@example.com",
                         "테스트 이메일 #" + i,
-                        "이것은 테스트 이메일입니다.\n" + i + "번째 메일입니다."
-                );
+                        "이것은 테스트 이메일입니다.\n" + i + "번째 메일입니다.");
+            }
+            for (int i = 0; i < 10; i++) {
+                // 테스트 이메일 발송
+                sendTestEmail(
+                        "sender2" + i + "@example.com",
+                        "recipient2" + i + "@example.com",
+                        "테스트 이메일 #2" + i,
+                        "이것은 테스트 이메일입니다.\n" + i + "번째 메일입니다.");
             }
         } catch (MessagingException e) {
             System.out.println("이메일 발송 실패: " + e.getMessage());

@@ -6,6 +6,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
@@ -16,11 +18,15 @@ public class EmailQueue {
     private Long id;
 
     private String sender;      // 이메일 발신자
-    private String recipient;   // 이메일 수신자
     private String subject;     // 제목
 
-    @Column(length = 10000)
-    private String body;        // 본문
+    // 본문 관계 설정
+    @OneToOne(mappedBy = "emailQueue", cascade = CascadeType.ALL)
+    private EmailContent content;
+
+    // 수신자 관계 설정
+    @OneToMany(mappedBy = "emailQueue", cascade = CascadeType.ALL)
+    private List<EmailRecipient> recipients;
 
     // 첨부 파일 경로 (쉼표로 구분된 목록)
     private String attachments;
@@ -56,10 +62,6 @@ public class EmailQueue {
 
     // 중복 방지용 고유 식별자 (선택 사항)
     private String uniqueId;
-
-    // 참조, 숨은참조 필드
-    private String cc;
-    private String bcc;
 
     // 태그 또는 분류 (필터링, 검색용)
     private String tags;
@@ -114,5 +116,25 @@ public class EmailQueue {
         this.status = EmailStatus.FAILED;
         this.errorMessage = errorMessage;
         this.locked = false;
+    }
+
+    // 편의 메서드: 수신자 추가
+    public void addRecipient(String email, EmailRecipient.RecipientType type) {
+        if (recipients == null) {
+            recipients = new ArrayList<>();
+        }
+        EmailRecipient recipient = new EmailRecipient();
+        recipient.setEmail(email);
+        recipient.setType(type);
+        recipient.setEmailQueue(this);
+        recipients.add(recipient);
+    }
+
+    // 편의 메서드: 본문 설정
+    public void setEmailContent(String body) {
+        EmailContent newContent = new EmailContent();
+        newContent.setBody(body);
+        newContent.setEmailQueue(this);
+        this.content = newContent;
     }
 }

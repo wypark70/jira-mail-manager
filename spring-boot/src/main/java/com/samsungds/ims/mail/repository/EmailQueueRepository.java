@@ -1,11 +1,13 @@
 package com.samsungds.ims.mail.repository;
 
-import com.samsungds.ims.mail.model.EmailQueue;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import com.samsungds.ims.mail.model.EmailQueue;
 
 import jakarta.persistence.LockModeType;
 
@@ -13,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface EmailQueueRepository extends JpaRepository<EmailQueue, Long> {
 
     // 상태별 이메일 조회
@@ -63,9 +66,6 @@ public interface EmailQueueRepository extends JpaRepository<EmailQueue, Long> {
     // 특정 발신자의 이메일 조회
     List<EmailQueue> findBySender(String sender);
 
-    // 특정 수신자의 이메일 조회
-    List<EmailQueue> findByRecipient(String recipient);
-
     // 제목 기반 검색
     List<EmailQueue> findBySubjectContaining(String keyword);
 
@@ -79,4 +79,11 @@ public interface EmailQueueRepository extends JpaRepository<EmailQueue, Long> {
 
     @Query("SELECT COUNT(e) FROM EmailQueue e WHERE e.createdAt BETWEEN :start AND :end")
     long countTotalEmailsBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    /**
+     * 제목으로 이메일 큐 검색
+     */
+    Optional<EmailQueue> findBySubject(String subject);
+
+    Optional<EmailQueue> findBySenderAndSubject(String sender, String subject);
 }

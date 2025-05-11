@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import logo from '$lib/images/svelte-logo.svg';
 	import github from '$lib/images/github.svg';
+	import ThemeSelector from '$lib/components/ThemeSelector.svelte';
 </script>
 
 <header>
@@ -35,6 +36,7 @@
 	</nav>
 
 	<div class="corner">
+		<ThemeSelector />
 		<a href="https://github.com/sveltejs/kit">
 			<img src={github} alt="GitHub" />
 		</a>
@@ -48,8 +50,14 @@
 	}
 
 	.corner {
-		width: 3em;
-		height: 3em;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--background);
+		border-radius: 0.5em;
+		box-shadow: 0 0 0.5em rgba(0, 0, 0, 0.1);
+		margin: 0 1em;
+		padding: 0.5em;
 	}
 
 	.corner a {

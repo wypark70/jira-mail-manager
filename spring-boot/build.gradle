@@ -37,6 +37,8 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     // developmentOnly 'org.springframework.boot:spring-boot-devtools'
     implementation 'com.h2database:h2'
+    implementation 'ch.qos.logback:logback-classic'
+    implementation 'org.slf4j:slf4j-api'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.projectreactor:reactor-test'
@@ -58,7 +60,7 @@ tasks.register('copyFrontendBuildFiles', Copy) {
 tasks.named('processResources') {
     // 테스트 실행이 아닌 경우에만 프론트엔드 빌드에 의존
     if (!gradle.startParameter.taskNames.any { it.toLowerCase().contains('test') }) {
-        // dependsOn 'copyFrontendBuildFiles'
+        dependsOn 'copyFrontendBuildFiles'
     }
 }
 

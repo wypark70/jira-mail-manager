@@ -1,7 +1,13 @@
 package com.samsungds.ims.mail.handler;
 
 import com.samsungds.ims.mail.model.EmailQueue;
+import com.samsungds.ims.mail.model.EmailRecipient;
+import com.samsungds.ims.mail.model.EmailContent;
 import com.samsungds.ims.mail.repository.EmailQueueRepository;
+import com.samsungds.ims.mail.repository.EmailRecipientRepository;
+import com.samsungds.ims.mail.repository.EmailContentRepository;
+
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.subethamail.smtp.MessageHandler;
@@ -19,7 +25,8 @@ import java.util.Properties;
 public class SmtpMessageHandler implements MessageHandler {
 
     private final EmailQueueRepository emailQueueRepository;
-    private final String clientIp; // 클라이언트 IP
+    private final EmailRecipientRepository emailRecipientRepository;
+    private final EmailContentRepository emailContentRepository;
 
     private String from;
     private String to;
@@ -27,13 +34,13 @@ public class SmtpMessageHandler implements MessageHandler {
     @Override
     public void from(String from) {
         this.from = from;
-        log.info("보낸 사람 (From): {} ({})", from, clientIp);
+        log.info("보낸 사람 (From): {}", from);
     }
 
     @Override
     public void recipient(String recipient) {
         this.to = recipient;
-        log.info("받는 사람 (To): {} ({})", recipient, clientIp);
+        log.info("받는 사람 (To): {}", recipient);
     }
 
     @Override
@@ -41,30 +48,52 @@ public class SmtpMessageHandler implements MessageHandler {
         try {
             Properties props = new Properties();
             Session session = Session.getDefaultInstance(props, null);
-
             MimeMessage message = new MimeMessage(session, data);
 
             String subject = message.getSubject();
             String body = message.getContent().toString();
 
-            EmailQueue emailQueue = new EmailQueue();
-            emailQueue.setSender(from);
-            emailQueue.setRecipient(to);
-            emailQueue.setSubject(subject);
-            emailQueue.setBody(body);
+            // 동일한 발신자와 제목의 메일큐 검색
+            EmailQueue emailQueue = emailQueueRepository.findBySenderAndSubject(from, subject)
+                .orElseGet(() -> {
+                    // 새로운 메일큐 생성
+                    EmailQueue newQueue = new EmailQueue();
+                    newQueue.setSender(from);
+                    newQueue.setSubject(subject);
+                    newQueue.setStatus(EmailQueue.EmailStatus.QUEUED);
+                    EmailQueue savedQueue = emailQueueRepository.save(newQueue);
 
-            // 이메일 저장
-            emailQueueRepository.save(emailQueue);
+                    // 본문 저장
+                    EmailContent content = new EmailContent();
+                    content.setBody(body);
+                    content.setEmailQueue(savedQueue);
+                    emailContentRepository.save(content);
 
-            log.info("이메일 저장 완료. 클라이언트 IP: {}", clientIp);
+                    return savedQueue;
+                });
+
+            // 수신자가 존재하지 않는 경우에만 추가
+            if (!emailRecipientRepository.existsByEmailAndEmailQueue(to, emailQueue)) {
+                EmailRecipient recipient = new EmailRecipient();
+                recipient.setEmail(to);
+                recipient.setType(EmailRecipient.RecipientType.TO);
+                recipient.setEmailQueue(emailQueue);
+                emailRecipientRepository.save(recipient);
+                log.info("새로운 수신자 추가: {} (제목: {}, 발신자: {})", to, subject, from);
+            } else {
+                log.info("이미 존재하는 수신자: {} (제목: {}, 발신자: {})", to, subject, from);
+            }
+
+            log.info("이메일 처리 완료. 제목: {}, 발신자: {}", subject, from);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("이메일 처리 중 오류 발생", e);
+            throw new RuntimeException("이메일 처리 실패", e);
         }
     }
 
     @Override
     public void done() {
-        log.info("SMTP 요청 처리가 완료되었습니다. 클라이언트 IP: {}", clientIp);
+        log.info("SMTP 요청 처리가 완료되었습니다.");
     }
 }
