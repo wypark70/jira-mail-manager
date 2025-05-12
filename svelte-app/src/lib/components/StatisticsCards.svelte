@@ -105,7 +105,7 @@
             </div>
             <div class="ml-4">
                 <h2 class="text-sm text-gray-600">대기 중</h2>
-                <p class="text-2xl font-semibold text-gray-800">{stats.processingCount}</p>
+                <p class="text-2xl font-semibold text-gray-800">{stats.queuedCount + stats.retryCount}</p>
             </div>
         </div>
     </div>

@@ -1,6 +1,5 @@
 package com.samsungds.ims.mail.service;
 
-
 import com.samsungds.ims.mail.model.EmailQueue;
 import com.samsungds.ims.mail.repository.EmailQueueRepository;
 import lombok.Builder;
@@ -13,11 +12,14 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.context.SmartLifecycle;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +47,11 @@ public class EmailQueueProcessorService implements SmartLifecycle {
     private int lockTimeoutMinutes;
     @Value("${mail.batch.retry-delay-minutes:15}")
     private int retryDelayMinutes;
+    @Value("${mail.batch.concurrent-batch-size:5}")
+    private int concurrentBatchSize;
+
+    @Autowired
+    private AsyncEmailProcessor asyncEmailProcessor;
 
     // SmartLifecycle 구현
     @Override
@@ -103,15 +110,26 @@ public class EmailQueueProcessorService implements SmartLifecycle {
             // 재시도 대상 이메일 처리
             processRetryEmails();
 
-            // 대기 중인 이메일 처리
-            int processedCount = 0;
-            for (int i = 0; i < batchSize; i++) {
-                boolean processed = processNextEmail();
-                if (!processed) break;
-                processedCount++;
+            // 대기 중인 이메일 비동기 처리
+            for (int batch = 0; batch < batchSize; batch += concurrentBatchSize) {
+                List<CompletableFuture<Void>> futures = new ArrayList<>();
+                List<EmailQueue> emails = emailQueueRepository
+                        .findEmailsForProcessing(EmailQueue.EmailStatus.QUEUED, concurrentBatchSize);
+
+                if (emails.isEmpty())
+                    break;
+
+                // 각 이메일에 대해 비동기 처리 시작
+                for (EmailQueue email : emails) {
+                    CompletableFuture<Void> future = asyncEmailProcessor.processEmail(email);
+                    futures.add(future);
+                }
+
+                // 현재 배치의 모든 이메일 처리 완료 대기
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
             }
 
-            log.info("이메일 큐 처리 완료, 처리된 이메일 수: {}", processedCount);
+            log.info("이메일 큐 처리 완료");
         } catch (Exception e) {
             log.error("이메일 큐 처리 중 오류 발생", e);
         }
@@ -124,10 +142,7 @@ public class EmailQueueProcessorService implements SmartLifecycle {
     public void unlockTimedOutEmails() {
         LocalDateTime timeoutThreshold = LocalDateTime.now().minusMinutes(lockTimeoutMinutes);
         int unlocked = emailQueueRepository.unlockTimedOutEmails(timeoutThreshold);
-
-        if (unlocked > 0) {
-            log.info("타임아웃된 {} 개의 이메일 잠금이 해제되었습니다", unlocked);
-        }
+        log.info("타임아웃된 {} 개의 이메일 잠금이 해제되었습니다", unlocked);
     }
 
     /**
@@ -137,10 +152,9 @@ public class EmailQueueProcessorService implements SmartLifecycle {
     public void processScheduledEmails() {
         LocalDateTime now = LocalDateTime.now();
         List<EmailQueue> scheduledEmails = emailQueueRepository.findScheduledEmailsDueBefore(now);
+        log.info("{}개의 예약 이메일이 발송 예정입니다", scheduledEmails.size());
 
         if (!scheduledEmails.isEmpty()) {
-            log.info("{}개의 예약 이메일이 발송 예정입니다", scheduledEmails.size());
-
             for (EmailQueue emailQueue : scheduledEmails) {
                 emailQueue.setStatus(EmailQueue.EmailStatus.QUEUED);
                 emailQueueRepository.save(emailQueue);
@@ -155,120 +169,13 @@ public class EmailQueueProcessorService implements SmartLifecycle {
     public void processRetryEmails() {
         LocalDateTime retryThreshold = LocalDateTime.now().minusMinutes(retryDelayMinutes);
         List<EmailQueue> retryEmails = emailQueueRepository.findEmailsForRetry(retryThreshold);
+        log.info("{}개의 이메일이 재시도 대상입니다", retryEmails.size());
 
         if (!retryEmails.isEmpty()) {
-            log.info("{}개의 이메일이 재시도 대상입니다", retryEmails.size());
-
             for (EmailQueue emailQueue : retryEmails) {
                 emailQueue.setStatus(EmailQueue.EmailStatus.QUEUED);
                 emailQueueRepository.save(emailQueue);
             }
-        }
-    }
-
-    /**
-     * 다음 이메일 처리
-     */
-    @Transactional
-    public boolean processNextEmail() {
-        // 다음 처리할 이메일 조회
-        EmailQueue email = emailQueueRepository.findNextEmailForProcessingWithLock(EmailQueue.EmailStatus.QUEUED)
-                .orElse(null);
-
-        if (email == null) {
-            return false;
-        }
-
-        try {
-            // 여기서 실제 이메일 발송 처리
-            try {
-                log.info("이메일 ID {} 발송 처리 중...", email.getId());
-                emailQueueRepository.lockEmailForProcessing(
-                        email.getId(),
-                        processorId,  // 현재 프로세스의 ID
-                        LocalDateTime.now()
-                );
-                sendEmail(email);
-
-                // 발송 성공 시 상태 업데이트
-                email.markAsSent();
-                emailQueueRepository.save(email);
-                log.info("이메일 ID {} 발송 완료", email.getId());
-            } catch (Exception e) {
-                log.error("이메일 ID {} 발송 실패: {}", email.getId(), e.getMessage());
-
-                // 발송 실패 시 재시도 횟수 증가 또는 실패 상태로 변경
-                email.incrementRetry();
-                if (email.getRetryCount() >= email.getMaxRetries()) {
-                    email.markAsFailed(e.getMessage());
-                }
-                emailQueueRepository.save(email);
-            }
-
-        } catch (Exception e) {
-            log.error("이메일 처리 중 오류 발생: {} - 프로세서: {}", e.getMessage(), processorId, e);
-
-            // 오류 발생 시 이메일 잠금 해제 시도
-            try {
-                EmailQueue errorEmail = emailQueueRepository.findById(email.getId()).orElse(null);
-                if (errorEmail != null && errorEmail.isLocked() &&
-                        errorEmail.getStatus() == EmailQueue.EmailStatus.PROCESSING) {
-                    errorEmail.markAsFailed("처리 중 시스템 오류: " + e.getMessage());
-                    emailQueueRepository.save(errorEmail);
-                }
-            } catch (Exception ex) {
-                log.error("오류 복구 중 추가 오류 발생", ex);
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * 실제 이메일 발송 처리
-     */
-    private void sendEmail(EmailQueue emailQueue) throws Exception {
-        try {
-            // 1-20초 사이의 임의 시간 생성
-            int processingTime = (int)(Math.random() * 20 + 1) * 1000;  // milliseconds
-
-            // 처리 시간이 15초를 초과하면 실패로 처리
-            if (processingTime > 15000) {
-                emailQueue.incrementRetry(); // retryCount 증가
-                emailQueueRepository.save(emailQueue); // DB에 재시도 횟수 저장
-                log.warn("이메일 ID {} 처리 시간 초과: {}초 (재시도 횟수: {})", 
-                    emailQueue.getId(), 
-                    processingTime/1000, 
-                    emailQueue.getRetryCount());
-                throw new Exception(String.format("처리 시간(%d초)이 15초 제한을 초과했습니다", processingTime/1000));
-            }
-
-            // 50% 확률로 추가 실패 발생
-            if (Math.random() < 0.5) {
-                emailQueue.incrementRetry(); // retryCount 증가
-                emailQueueRepository.save(emailQueue); // DB에 재시도 횟수 저장
-                log.warn("이메일 ID {} 발송 실패 (재시도 횟수: {})", 
-                    emailQueue.getId(), 
-                    emailQueue.getRetryCount());
-                throw new Exception("50% 확률로 발생한 의도적인 발송 실패");
-            }
-
-            // 실제 처리 시간만큼 대기
-            Thread.sleep(processingTime);
-            log.info("이메일 ID {} 발송 소요시간: {}초", emailQueue.getId(), processingTime/1000);
-            
-            /*MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            
-            // ...existing code...
-            
-            // 이메일 발송
-            mailSender.send(message);*/
-
-        } catch (Exception e) {
-            emailQueue.incrementRetry(); // retryCount 증가
-            emailQueueRepository.save(emailQueue); // DB에 재시도 횟수 저장
-            throw e;
         }
     }
 

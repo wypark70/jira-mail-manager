@@ -114,8 +114,8 @@
         <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">이메일 배치 프로세서</h3>
         <div class="flex items-center space-x-2">
             <span class="relative flex h-3 w-3">
-                <span class={statusPingClass}/> 
-                <span class={statusDotClass}/>
+                <span class={statusPingClass}></span>
+                <span class={statusDotClass}></span>
             </span>
             <span class="text-sm font-medium text-gray-600 dark:text-gray-300">
                 {processorStatus.status}
@@ -170,7 +170,7 @@
                     'cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500' : 
                     'bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:hover:bg-blue-500'}`}
                 disabled={processorStatus.running}
-                on:click={startProcessor}
+                onclick={startProcessor}
             >
                 <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -185,7 +185,7 @@
                     'cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500' : 
                     'bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:hover:bg-red-500'}`}
                 disabled={!processorStatus.running}
-                on:click={stopProcessor}
+                onclick={stopProcessor}
             >
                 <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

@@ -102,8 +102,8 @@
         <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">SMTP 서버</h3>
         <div class="flex items-center space-x-2">
             <span class="relative flex h-3 w-3">
-                <span class={statusPingClass}/> 
-                <span class={statusDotClass}/>
+                <span class={statusPingClass}></span>
+                <span class={statusDotClass}></span>
             </span>
             <span class="text-sm font-medium text-gray-600 dark:text-gray-300">
                 {serverStatus.status}

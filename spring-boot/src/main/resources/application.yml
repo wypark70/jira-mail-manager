@@ -31,6 +31,9 @@ spring:
       enabled: false
     livereload:
       enabled: false
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Seoul
 
 # SMTP 접근 제어 설정 추가
 mail:

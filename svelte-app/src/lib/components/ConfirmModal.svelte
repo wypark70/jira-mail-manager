@@ -16,8 +16,12 @@
 
 {#if show}
     <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <!-- 배경 오버레이 -->
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" on:click={onCancel}></div>
+        <!-- 배경 오버레이 - opacity 수정 -->
+        <div 
+            class="fixed inset-0 transition-opacity bg-gray-500/70" 
+            aria-hidden="true" 
+            on:click={onCancel}
+        ></div>
 
         <div class="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
             <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg dark:bg-gray-800">

@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Repository;
 
 import com.samsungds.ims.mail.model.EmailQueue;
@@ -86,4 +87,7 @@ public interface EmailQueueRepository extends JpaRepository<EmailQueue, Long> {
     Optional<EmailQueue> findBySubject(String subject);
 
     Optional<EmailQueue> findBySenderAndSubject(String sender, String subject);
+
+    @Query("SELECT e FROM EmailQueue e WHERE e.status = :status ORDER BY e.createdAt ASC LIMIT :limit")
+    List<EmailQueue> findEmailsForProcessing(@Param("status") EmailQueue.EmailStatus status, @Param("limit") int limit);
 }

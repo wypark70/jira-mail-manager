@@ -7,10 +7,8 @@ const config = {
 		adapter: adapter({
 			fallback: 'index.html',
 			pages: 'build',
-			assets: 'build',
-			precompress: false,
-			strict: true
-		}),
+			assets: 'build'
+		})
 	}
 };
 
