@@ -2,7 +2,7 @@ package com.samsungds.ims.mail.controller;
 
 import com.samsungds.ims.mail.service.SmtpServerService;
 import com.samsungds.ims.mail.dto.LogMessage;
-import com.samsungds.ims.mail.service.LogService;
+import com.samsungds.ims.mail.service.EmailQueueProcessLogService;
 
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -17,11 +17,11 @@ import org.springframework.http.HttpHeaders;
 public class SmtpController {
 
     private final SmtpServerService smtpServerService;
-    private final LogService logService;
+    private final EmailQueueProcessLogService emailQueueProcessLogService;
 
-    public SmtpController(SmtpServerService smtpServerService, LogService logService) {
+    public SmtpController(SmtpServerService smtpServerService, EmailQueueProcessLogService emailQueueProcessLogService) {
         this.smtpServerService = smtpServerService;
-        this.logService = logService;
+        this.emailQueueProcessLogService = emailQueueProcessLogService;
     }
 
     @GetMapping(path = "/logs", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -29,7 +29,7 @@ public class SmtpController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CACHE_CONTROL, "no-cache")
                 .header(HttpHeaders.CONNECTION, "keep-alive")
-                .body(logService.getLogStream());
+                .body(emailQueueProcessLogService.getLogStream());
     }
 
     @PostMapping("/start")

@@ -2,21 +2,21 @@ package com.samsungds.ims.mail.config;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
-import com.samsungds.ims.mail.service.LogService;
+import com.samsungds.ims.mail.service.EmailQueueProcessLogService;
 
 public class LogServiceAppender extends AppenderBase<ILoggingEvent> {
-    private LogService logService;
+    private EmailQueueProcessLogService emailQueueProcessLogService;
 
-    public void setLogService(LogService logService) {
-        this.logService = logService;
+    public void setLogService(EmailQueueProcessLogService emailQueueProcessLogService) {
+        this.emailQueueProcessLogService = emailQueueProcessLogService;
     }
 
     @Override
     protected void append(ILoggingEvent event) {
-        if (logService != null) {
+        if (emailQueueProcessLogService != null) {
             String level = event.getLevel().toString();
             String message = event.getFormattedMessage();
-            logService.sendLog(message, level);
+            emailQueueProcessLogService.sendLog(message, level);
         }
     }
 }

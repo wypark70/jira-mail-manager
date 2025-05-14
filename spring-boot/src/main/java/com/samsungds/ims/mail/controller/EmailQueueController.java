@@ -1,8 +1,12 @@
 package com.samsungds.ims.mail.controller;
 
+import com.samsungds.ims.mail.dto.EmailQueueStats;
+import com.samsungds.ims.mail.dto.ProcessorStatus;
 import com.samsungds.ims.mail.model.EmailQueue;
 import com.samsungds.ims.mail.repository.EmailQueueRepository;
+import com.samsungds.ims.mail.service.EmailQueueProcessLogService;
 import com.samsungds.ims.mail.service.EmailQueueProcessorService;
+import com.samsungds.ims.mail.service.EmailQueueTransactionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -27,6 +31,7 @@ public class EmailQueueController {
 
     private final EmailQueueRepository emailQueueRepository;
     private final EmailQueueProcessorService emailQueueProcessorService;
+    private final EmailQueueTransactionService emailQueueTransactionService;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     /**
@@ -105,8 +110,8 @@ public class EmailQueueController {
      * 이메일 큐 상태 조회
      */
     @GetMapping("/stats")
-    public ResponseEntity<EmailQueueProcessorService.EmailQueueStats> getQueueStats() {
-        EmailQueueProcessorService.EmailQueueStats stats = emailQueueProcessorService.getQueueStats();
+    public ResponseEntity<EmailQueueStats> getQueueStats() {
+        EmailQueueStats stats = emailQueueTransactionService.getQueueStats();
         return ResponseEntity.ok(stats);
     }
 
@@ -119,7 +124,7 @@ public class EmailQueueController {
         
         // 연결 시작 시 초기 데이터 전송
         try {
-            EmailQueueProcessorService.EmailQueueStats stats = emailQueueProcessorService.getQueueStats();
+            EmailQueueStats stats = emailQueueTransactionService.getQueueStats();
             emitter.send(stats);
         } catch (Exception e) {
             emitter.completeWithError(e);
@@ -131,7 +136,7 @@ public class EmailQueueController {
             try {
                 while (true) {
                     Thread.sleep(5000); // 5초 대기
-                    EmailQueueProcessorService.EmailQueueStats stats = emailQueueProcessorService.getQueueStats();
+                    EmailQueueStats stats = emailQueueTransactionService.getQueueStats();
                     emitter.send(stats);
                 }
             } catch (Exception e) {
@@ -249,7 +254,7 @@ public class EmailQueueController {
 
         try {
             emailQueueProcessorService.start();
-            EmailQueueProcessorService.ProcessorStatus status = emailQueueProcessorService.getProcessorStatus();
+            ProcessorStatus status = emailQueueProcessorService.getProcessorStatus();
             
             response.put("success", true);
             response.put("message", "배치 프로세서가 시작되었습니다.");
@@ -295,8 +300,8 @@ public class EmailQueueController {
      * 배치 프로세서 상태 조회
      */
     @GetMapping("/processor/status")
-    public ResponseEntity<EmailQueueProcessorService.ProcessorStatus> getProcessorStatus() {
-        EmailQueueProcessorService.ProcessorStatus status = emailQueueProcessorService.getProcessorStatus();
+    public ResponseEntity<ProcessorStatus> getProcessorStatus() {
+        ProcessorStatus status = emailQueueProcessorService.getProcessorStatus();
         return ResponseEntity.ok(status);
     }
 

@@ -17,7 +17,7 @@ public class SmtpMailTests {
     @Test
     void TestSend() {
         try {
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 200; i++) {
                 // 테스트 이메일 발송
                 sendTestEmail(
                         "sender" + i + "@example.com",
@@ -25,7 +25,7 @@ public class SmtpMailTests {
                         "테스트 이메일 #" + i,
                         "이것은 테스트 이메일입니다.\n" + i + "번째 메일입니다.");
             }
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 200; i++) {
                 // 테스트 이메일 발송
                 sendTestEmail(
                         "sender2" + i + "@example.com",

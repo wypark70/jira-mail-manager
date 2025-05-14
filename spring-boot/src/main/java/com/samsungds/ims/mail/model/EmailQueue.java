@@ -20,14 +20,6 @@ public class EmailQueue {
     private String sender;      // 이메일 발신자
     private String subject;     // 제목
 
-    // 본문 관계 설정
-    @OneToOne(mappedBy = "emailQueue", cascade = CascadeType.ALL)
-    private EmailQueueContent content;
-
-    // 수신자 관계 설정
-    @OneToMany(mappedBy = "emailQueue", cascade = CascadeType.ALL)
-    private List<EmailQueueRecipient> recipients;
-
     // 첨부 파일 경로 (쉼표로 구분된 목록)
     private String attachments;
 
@@ -116,25 +108,5 @@ public class EmailQueue {
         this.status = EmailStatus.FAILED;
         this.errorMessage = errorMessage;
         this.locked = false;
-    }
-
-    // 편의 메서드: 수신자 추가
-    public void addRecipient(String email, EmailQueueRecipient.RecipientType type) {
-        if (recipients == null) {
-            recipients = new ArrayList<>();
-        }
-        EmailQueueRecipient recipient = new EmailQueueRecipient();
-        recipient.setEmail(email);
-        recipient.setType(type);
-        recipient.setEmailQueue(this);
-        recipients.add(recipient);
-    }
-
-    // 편의 메서드: 본문 설정
-    public void setContent(String body) {
-        EmailQueueContent newContent = new EmailQueueContent();
-        newContent.setBody(body);
-        newContent.setEmailQueue(this);
-        this.content = newContent;
     }
 }

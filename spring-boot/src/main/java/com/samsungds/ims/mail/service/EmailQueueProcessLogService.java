@@ -7,10 +7,10 @@ import org.springframework.stereotype.Service;
 import com.samsungds.ims.mail.dto.LogMessage;
 
 @Service
-public class LogService {
+public class EmailQueueProcessLogService {
     private final Sinks.Many<LogMessage> logSink;
     
-    public LogService() {
+    public EmailQueueProcessLogService() {
         this.logSink = Sinks.many().multicast().onBackpressureBuffer();
     }
     
