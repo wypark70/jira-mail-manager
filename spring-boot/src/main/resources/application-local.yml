@@ -52,6 +52,7 @@ mail:
     allowed.domains: localhost,kubernetes.docker.internal
   batch:
     batch-size: 10
+    concurrent-batch-size: 5
     lock-timeout-minutes: 1
     retry-delay-minutes: 1
 

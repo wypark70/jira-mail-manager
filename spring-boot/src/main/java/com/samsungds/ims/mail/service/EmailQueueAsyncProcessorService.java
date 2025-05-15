@@ -31,7 +31,7 @@ public class EmailQueueAsyncProcessorService {
             log.error("이메일 ID {} 발송 실패: {}", email.getId(), e.getMessage());
             email.setProcessorId(null);
             email.setLocked(false);
-            email.incrementRetry();
+            email.incrementRetry(e.getMessage());
             return CompletableFuture.completedFuture(email);
         }
     }

@@ -9,11 +9,11 @@ import lombok.Setter;
 @Setter
 @Getter
 public class EmailQueueStats {
-    private int queuedCount;        // 대기 중인 이메일 수
-    private int processingCount;    // 처리 중인 이메일 수
-    private int sentCount;          // 전송 완료된 이메일 수
-    private int failedCount;        // 실패한 이메일 수
-    private int retryCount;         // 재시도 예정인 이메일 수
-    private int scheduledCount;     // 예약된 이메일 수
+    private long queuedCount;        // 대기 중인 이메일 수
+    private long processingCount;    // 처리 중인 이메일 수
+    private long sentCount;          // 전송 완료된 이메일 수
+    private long failedCount;        // 실패한 이메일 수
+    private long retryCount;         // 재시도 예정인 이메일 수
+    private long scheduledCount;     // 예약된 이메일 수
     private long totalCount;        // 전체 이메일 수
 }

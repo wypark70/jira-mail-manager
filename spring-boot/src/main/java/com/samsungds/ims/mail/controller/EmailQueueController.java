@@ -15,6 +15,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.http.MediaType;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+// import 문 추가
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.springframework.data.domain.Pageable;
 
 @RestController
 @RequestMapping("/api/email-queue")
@@ -339,4 +345,37 @@ public class EmailQueueController {
 
         return ResponseEntity.ok(result);
     }
+
+    /**
+     * 이메일 검색 및 필터링
+     */
+    @GetMapping("/search")
+    public ResponseEntity<Page<EmailQueue>> searchEmails(
+        @RequestParam(required = false) String status,
+        @RequestParam(required = false) String subject,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "createdAt") String sort,
+        @RequestParam(defaultValue = "desc") String direction
+    ) {
+        try {
+            EmailQueue.EmailStatus emailStatus = status != null && !status.isEmpty() ? 
+                EmailQueue.EmailStatus.valueOf(status.toUpperCase()) : null;
+
+            Sort.Direction sortDirection = Sort.Direction.fromString(direction);
+            Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
+
+            Page<EmailQueue> emails = emailQueueRepository.findByStatusAndSubject(
+                emailStatus,
+                subject,
+                pageable
+            );
+
+            return ResponseEntity.ok(emails);
+        } catch (IllegalArgumentException e) {
+            log.error("검색 파라미터 오류", e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
 }

@@ -3,7 +3,7 @@
 
   export async function load({ params }) {
     const { id } = params;
-    const response = await fetch(`<span class="math-inline">\{springApiBaseUrl\}/mails/</span>{id}`);
+    const response = await fetch(`${springApiBaseUrl}/mails/${id}`);
     const mail = await response.json();
     return { props: { mail } };
   }
@@ -12,20 +12,24 @@
 <script>
   import { goto } from '$app/navigation';
 
-  export let mail;
+  export let mail = {
+    id: '',
+    subject: '',
+    body: '',
+    sentAt: '',
+  };
 
-  let recipient = mail.recipient;
   let subject = mail.subject;
   let body = mail.body;
   let sent_at = mail.sentAt ? new Date(mail.sentAt).toISOString().slice(0, 19) : '';
 
   async function handleSubmit() {
-    const response = await fetch(`<span class="math-inline">\{springApiBaseUrl\}/mails/</span>{mail.id}`, {
+    const response = await fetch(`${springApiBaseUrl}/mails/${mail.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ recipient, subject, body, sentAt: sent_at }),
+      body: JSON.stringify({ subject, body, sentAt: sent_at }),
     });
 
     if (response.ok) {
@@ -41,10 +45,6 @@
 <h1>메일 수정</h1>
 
 <form on:submit|preventDefault={handleSubmit}>
-  <div>
-    <label for="recipient">수신자:</label>
-    <input type="email" id="recipient" bind:value={recipient} required>
-  </div>
   <div>
     <label for="subject">제목:</label>
     <input type="text" id="subject" bind:value={subject} required>

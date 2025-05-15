@@ -1,20 +1,22 @@
 package com.samsungds.ims.mail.repository;
 
+import com.samsungds.ims.mail.model.EmailQueue;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.stereotype.Repository;
-
-import com.samsungds.ims.mail.model.EmailQueue;
 
 import jakarta.persistence.LockModeType;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.stereotype.Repository;
 
 @Repository
 public interface EmailQueueRepository extends JpaRepository<EmailQueue, Long> {
@@ -90,4 +92,25 @@ public interface EmailQueueRepository extends JpaRepository<EmailQueue, Long> {
 
     @Query("SELECT e FROM EmailQueue e WHERE e.status = :status ORDER BY e.createdAt ASC LIMIT :limit")
     List<EmailQueue> findEmailsForProcessing(@Param("status") EmailQueue.EmailStatus status, @Param("limit") int limit);
+    
+    /**
+     * 특정 상태의 이메일 개수만 조회 (성능 최적화)
+     */
+    @Query("SELECT COUNT(e) FROM EmailQueue e WHERE e.status = :status")
+    long countByStatus(@Param("status") EmailQueue.EmailStatus status);
+    
+    /**
+     * 모든 상태별 이메일 개수를 한 번의 쿼리로 조회 (최적화)
+     */
+    @Query("SELECT e.status, COUNT(e) FROM EmailQueue e GROUP BY e.status")
+    List<Object[]> countAllByStatus();
+
+    @Query("SELECT e FROM EmailQueue e WHERE " +
+           "(:status IS NULL OR e.status = :status) AND " +
+           "(:subject IS NULL OR LOWER(e.subject) LIKE LOWER(CONCAT('%', :subject, '%')))")
+    Page<EmailQueue> findByStatusAndSubject(
+        @Param("status") EmailQueue.EmailStatus status,
+        @Param("subject") String subject,
+        Pageable pageable
+    );
 }

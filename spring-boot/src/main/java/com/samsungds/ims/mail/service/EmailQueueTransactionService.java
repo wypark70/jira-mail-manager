@@ -94,11 +94,41 @@ public class EmailQueueTransactionService {
     }
 
     /**
-     * 예약된 이메일 처리
+     * 처리된 이메일 상태 업데이트 - 선택적 필드만 업데이트
      */
     @Transactional
-    public void saveProcessedEmails(List<EmailQueue> emailQueueList) {
-        emailQueueRepository.saveAll(emailQueueList);
+    public void saveProcessedEmails(List<EmailQueue> processedEmails) {
+        if (processedEmails.isEmpty()) {
+            return;
+        }
+
+        for (EmailQueue email : processedEmails) {
+            EmailQueue existingEmail = emailQueueRepository.findById(email.getId())
+                    .orElse(null);
+
+            if (existingEmail == null) {
+                log.warn("ID {}인 이메일을 찾을 수 없습니다. 상태 업데이트를 건너뜁니다.", email.getId());
+                continue;
+            }
+
+            // 필요한 필드만 선택적으로 업데이트
+            existingEmail.setStatus(email.getStatus());
+            existingEmail.setRetryCount(email.getRetryCount());
+            existingEmail.setLastRetryAt(email.getLastRetryAt());
+            existingEmail.setLocked(email.isLocked());
+            existingEmail.setProcessorId(email.getProcessorId());
+
+            if (email.getStatus() == EmailQueue.EmailStatus.SENT) {
+                existingEmail.setSentAt(email.getSentAt());
+            } else if (email.getStatus() == EmailQueue.EmailStatus.FAILED) {
+                existingEmail.setErrorMessage(email.getErrorMessage());
+            }
+
+            // 변경된 엔티티 저장
+            emailQueueRepository.save(existingEmail);
+        }
+
+        log.info("{}개의 이메일 상태가 성공적으로 업데이트되었습니다.", processedEmails.size());
     }
 
     /**
@@ -175,18 +205,57 @@ public class EmailQueueTransactionService {
 
     /**
      * 이메일 큐 상태 조회
+     * 단일 쿼리로 모든 상태의 개수를 가져와 성능을 최적화합니다.
      */
     @Transactional(readOnly = true)
     public EmailQueueStats getQueueStats() {
         EmailQueueStats stats = new EmailQueueStats();
         stats.setTotalCount(emailQueueRepository.count());
-        stats.setQueuedCount(emailQueueRepository.findByStatus(EmailQueue.EmailStatus.QUEUED).size());
-        stats.setProcessingCount(emailQueueRepository.findByStatus(EmailQueue.EmailStatus.PROCESSING).size());
-        stats.setSentCount(emailQueueRepository.findByStatus(EmailQueue.EmailStatus.SENT).size());
-        stats.setFailedCount(emailQueueRepository.findByStatus(EmailQueue.EmailStatus.FAILED).size());
-        stats.setRetryCount(emailQueueRepository.findByStatus(EmailQueue.EmailStatus.RETRY).size());
-        stats.setScheduledCount(emailQueueRepository.findByStatus(EmailQueue.EmailStatus.SCHEDULED).size());
-
+        
+        // 기본값 0으로 설정
+        stats.setQueuedCount(0);
+        stats.setProcessingCount(0);
+        stats.setSentCount(0);
+        stats.setFailedCount(0);
+        stats.setRetryCount(0);
+        stats.setScheduledCount(0);
+        
+        // 모든 상태 개수를 한 번의 쿼리로 조회
+        List<Object[]> statusCounts = emailQueueRepository.countAllByStatus();
+        
+        // 조회된 결과를 상태별로 매핑
+        for (Object[] result : statusCounts) {
+            EmailQueue.EmailStatus status = (EmailQueue.EmailStatus) result[0];
+            long count = ((Number) result[1]).longValue();
+            
+            switch (status) {
+                case QUEUED:
+                    stats.setQueuedCount(count);
+                    break;
+                case PROCESSING:
+                    stats.setProcessingCount(count);
+                    break;
+                case SENT:
+                    stats.setSentCount(count);
+                    break;
+                case FAILED:
+                    stats.setFailedCount(count);
+                    break;
+                case RETRY:
+                    stats.setRetryCount(count);
+                    break;
+                case SCHEDULED:
+                    stats.setScheduledCount(count);
+                    break;
+                case CANCELLED:
+                    // 필요한 경우 추가
+                    break;
+                default:
+                    // 추가 상태 처리
+                    break;
+            }
+        }
+        
         return stats;
     }
 

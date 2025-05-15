@@ -29,12 +29,4 @@ public class EmailHistory {
     @CreationTimestamp
     private LocalDateTime createdAt;  // 히스토리 생성 시간
     private LocalDateTime sentAt;     // 실제 발송 시간
-
-    // 본문 관계 설정
-    @OneToOne(mappedBy = "emailHistory", cascade = CascadeType.ALL)
-    private EmailHistoryContent content;
-
-    // 수신자 관계 설정
-    @OneToMany(mappedBy = "emailHistory", cascade = CascadeType.ALL)
-    private List<EmailHistoryRecipient> recipients = new ArrayList<>();
 }

@@ -85,8 +85,8 @@
                 </svg>
             </div>
             <div class="ml-4">
-                <h2 class="text-sm text-gray-600">총 메일</h2>
-                <p class="text-2xl font-semibold text-gray-800">{stats.totalCount}</p>
+                <h2 class="text-sm text-gray-600">Queued</h2>
+                <p class="text-2xl font-semibold text-gray-800">{stats.queuedCount}</p>
             </div>
         </div>
     </div>
@@ -104,8 +104,8 @@
                 </svg>
             </div>
             <div class="ml-4">
-                <h2 class="text-sm text-gray-600">대기 중</h2>
-                <p class="text-2xl font-semibold text-gray-800">{stats.queuedCount + stats.retryCount}</p>
+                <h2 class="text-sm text-gray-600">Retry</h2>
+                <p class="text-2xl font-semibold text-gray-800">{stats.retryCount}</p>
             </div>
         </div>
     </div>
@@ -123,7 +123,7 @@
                 </svg>
             </div>
             <div class="ml-4">
-                <h2 class="text-sm text-gray-600">발송 완료</h2>
+                <h2 class="text-sm text-gray-600">Sent</h2>
                 <p class="text-2xl font-semibold text-gray-800">{stats.sentCount}</p>
             </div>
         </div>
@@ -142,7 +142,7 @@
                 </svg>
             </div>
             <div class="ml-4">
-                <h2 class="text-sm text-gray-600">실패</h2>
+                <h2 class="text-sm text-gray-600">Failed</h2>
                 <p class="text-2xl font-semibold text-gray-800">{stats.failedCount}</p>
             </div>
         </div>

@@ -77,13 +77,14 @@ public class EmailQueue {
     }
 
     // 편의 메서드: 재시도 증가
-    public void incrementRetry() {
-        this.retryCount++;
+    public void incrementRetry(String errorMessage) {
         this.lastRetryAt = LocalDateTime.now();
 
         if (this.retryCount >= this.maxRetries) {
-            this.status = EmailStatus.FAILED;
+            markAsFailed(errorMessage);
         } else {
+            this.retryCount++;
+            this.errorMessage = errorMessage;
             this.status = EmailStatus.RETRY;
         }
     }
