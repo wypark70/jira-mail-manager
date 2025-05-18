@@ -3,10 +3,9 @@ package com.samsungds.ims.mail.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Data
@@ -27,6 +26,10 @@ public class EmailHistory {
     private EmailQueue.EmailStatus status;  // 최종 상태
 
     @CreationTimestamp
-    private LocalDateTime createdAt;  // 히스토리 생성 시간
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+
     private LocalDateTime sentAt;     // 실제 발송 시간
 }

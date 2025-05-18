@@ -1,5 +1,5 @@
 // EmailEdit.js - 이메일 수정 컴포넌트
-import {EmailUtils} from './EmailUtils.js';
+import { EmailUtils } from "./EmailUtils.js";
 
 export class EmailEdit extends HTMLElement {
     constructor() {

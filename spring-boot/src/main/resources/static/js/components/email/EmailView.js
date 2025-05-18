@@ -1,5 +1,4 @@
 // EmailView.js - 이메일 상세보기 컴포넌트
-import {EmailUtils} from './EmailUtils.js';
 
 export class EmailView extends HTMLElement {
     constructor() {

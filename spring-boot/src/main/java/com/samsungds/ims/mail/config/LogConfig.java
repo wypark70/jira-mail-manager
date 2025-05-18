@@ -2,12 +2,13 @@ package com.samsungds.ims.mail.config;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.spi.ILoggingEvent;  // 추가된 import
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.samsungds.ims.mail.service.EmailQueueProcessLogService;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
-import jakarta.annotation.PostConstruct;
+
 import java.util.Iterator;
 
 @Configuration

@@ -1,21 +1,20 @@
 package com.samsungds.ims.mail.service;
 
 import com.samsungds.ims.mail.handler.SmtpMessageHandlerFactory;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.subethamail.smtp.server.SMTPServer;
 
 @Service
 @Slf4j
-public class SmtpServerService {
+public class SmtpInterceptorServerService {
 
     private static final int SMTP_PORT = 25;
     private final SmtpMessageHandlerFactory messageHandlerFactory;
     private SMTPServer smtpServer;
     private boolean running = false;
 
-    public SmtpServerService(SmtpMessageHandlerFactory messageHandlerFactory) {
+    public SmtpInterceptorServerService(SmtpMessageHandlerFactory messageHandlerFactory) {
         this.messageHandlerFactory = messageHandlerFactory;
     }
 

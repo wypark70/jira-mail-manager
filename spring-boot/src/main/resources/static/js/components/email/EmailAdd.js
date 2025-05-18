@@ -1,5 +1,5 @@
 // EmailAdd.js - 이메일 추가 컴포넌트
-import {EmailUtils} from './EmailUtils.js';
+import { EmailUtils } from "./EmailUtils.js";
 
 export class EmailAdd extends HTMLElement {
     constructor() {

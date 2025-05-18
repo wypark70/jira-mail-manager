@@ -4,30 +4,26 @@ import com.samsungds.ims.mail.dto.EmailQueueStats;
 import com.samsungds.ims.mail.dto.ProcessorStatus;
 import com.samsungds.ims.mail.model.EmailQueue;
 import com.samsungds.ims.mail.repository.EmailQueueRepository;
-import com.samsungds.ims.mail.service.EmailQueueProcessLogService;
 import com.samsungds.ims.mail.service.EmailQueueProcessorService;
 import com.samsungds.ims.mail.service.EmailQueueTransactionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.http.MediaType;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
-// import 문 추가
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import org.springframework.data.domain.Pageable;
+import java.util.concurrent.*;
 
 @RestController
 @RequestMapping("/api/email-queue")
@@ -128,26 +124,29 @@ public class EmailQueueController {
     public SseEmitter streamStats() {
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
         
-        // 연결 시작 시 초기 데이터 전송
-        try {
-            EmailQueueStats stats = emailQueueTransactionService.getQueueStats();
-            emitter.send(stats);
-        } catch (Exception e) {
-            emitter.completeWithError(e);
-            return emitter;
-        }
-
-        // 백그라운드에서 주기적으로 통계 업데이트
-        executorService.execute(() -> {
+        // 연결 해제 시 리소스 정리를 위한 콜백 등록
+        emitter.onCompletion(executorService::shutdown);
+        
+        emitter.onTimeout(executorService::shutdown);
+        
+        // 별도의 스레드 풀 사용
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        
+        // 주기적인 통계 업데이트 작업 예약
+        ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(() -> {
             try {
-                while (true) {
-                    Thread.sleep(5000); // 5초 대기
-                    EmailQueueStats stats = emailQueueTransactionService.getQueueStats();
-                    emitter.send(stats);
-                }
+                EmailQueueStats stats = emailQueueTransactionService.getQueueStats();
+                emitter.send(stats);
             } catch (Exception e) {
                 emitter.completeWithError(e);
+                scheduler.shutdown();
             }
+        }, 0, 5, TimeUnit.SECONDS);
+        
+        // 연결 종료 시 스케줄러 정리
+        emitter.onCompletion(() -> {
+            future.cancel(true);
+            scheduler.shutdown();
         });
         
         return emitter;

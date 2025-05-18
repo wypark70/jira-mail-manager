@@ -1,5 +1,5 @@
 // EmailList.js - 이메일 목록 컴포넌트
-import {EmailUtils} from './EmailUtils.js';
+import { EmailUtils } from "./EmailUtils.js";
 
 export class EmailList extends HTMLElement {
     constructor() {

@@ -1,8 +1,8 @@
 package com.samsungds.ims.mail.handler;
 
-import com.samsungds.ims.mail.repository.EmailQueueRepository;
-import com.samsungds.ims.mail.repository.EmailQueueRecipientRepository;
 import com.samsungds.ims.mail.repository.EmailQueueContentRepository;
+import com.samsungds.ims.mail.repository.EmailQueueRecipientRepository;
+import com.samsungds.ims.mail.repository.EmailQueueRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

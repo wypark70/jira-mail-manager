@@ -1,5 +1,5 @@
 // EmailDelete.js - 이메일 삭제 컴포넌트
-import {EmailUtils} from './EmailUtils.js';
+import { EmailUtils } from "./EmailUtils.js";
 
 export class EmailDelete extends HTMLElement {
     constructor() {

@@ -1,18 +1,31 @@
 spring:
-  application:
-    name: mail-manager
   datasource:
-    driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
     url: jdbc:log4jdbc:h2:file:./data/mail-manager;AUTO_SERVER=TRUE
+    driverClassName: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
     username: sa
     password:
+    hikari:
+      connection-timeout: 30000
+      minimum-idle: 5
+      maximum-pool-size: 15
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      auto-commit: true
+      connection-test-query: SELECT 1
+      validation-timeout: 5000
+      leak-detection-threshold: 60000
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
   jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: update
     properties:
       hibernate:
-        format_sql: true
         show_sql: false
+        format_sql: true
   data:
     rest:
       base-path: /api/data
@@ -31,9 +44,6 @@ spring:
       enabled: false
     livereload:
       enabled: false
-  jackson:
-    date-format: yyyy-MM-dd HH:mm:ss
-    time-zone: Asia/Seoul
 
 # SMTP 접근 제어 설정 추가
 mail:
@@ -42,8 +52,9 @@ mail:
     allowed.domains: localhost,kubernetes.docker.internal
   batch:
     batch-size: 10
-    lock-timeout-minutes: 10
-    retry-delay-minutes: 15
+    concurrent-batch-size: 5
+    lock-timeout-minutes: 1
+    retry-delay-minutes: 1
 
 logging:
   level:

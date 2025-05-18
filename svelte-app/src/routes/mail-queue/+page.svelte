@@ -1,4 +1,19 @@
-<script context="module" lang="ts">
+<script lang="ts">
+    import {
+        Button,
+        ButtonGroup,
+        Card,
+        Input,
+        Select,
+        Table,
+        TableBody,
+        TableBodyCell,
+        TableBodyRow,
+        TableHead,
+        TableHeadCell
+    } from "flowbite-svelte";
+    import {page} from '$app/state';
+
     const springApiBaseUrl = 'http://localhost:8080/api';
 
     interface PageResponse<T> {
@@ -24,24 +39,19 @@
         sortBy: string;
         sortDirection: string;
     }
-</script>
-
-<script lang="ts">
-    // 기존 코드 유지...
 
     // 검색 필터 상태 추가
     let searchFilters = {
-        status: '',  // 상태 필터
+        status: page.url.searchParams.get('status') || '',  // 상태 필터
         subject: ''  // 제목 검색어
     };
 
     // 상태 옵션 정의
     const statusOptions = [
-        {value: '', label: '전체 상태'},
-        {value: 'QUEUED', label: '대기 중'},
-        {value: 'RETRY', label: '재전송 대기 중'},
-        {value: 'SENT', label: '발송 완료'},
-        {value: 'FAILED', label: '실패'}
+        {value: 'QUEUED', label: 'QUEUED'},
+        {value: 'RETRY', label: 'RETRY'},
+        {value: 'SENT', label: 'SENT'},
+        {value: 'FAILED', label: 'FAILED'}
     ];
 
     let pagination: PaginationState = {
@@ -50,6 +60,13 @@
         sortBy: 'createdAt',
         sortDirection: 'asc'
     };
+
+    const pageSizeOptions = [
+        {value: 5, label: '5개씩 보기'},
+        {value: 10, label: '10개씩 보기'},
+        {value: 20, label: '20개씩 보기'},
+        {value: 50, label: '50개씩 보기'}
+    ];
 
     let mailQueuePage: PageResponse<Mail> = {
         content: [],
@@ -139,168 +156,109 @@
     // 초기 데이터 로드
     loadMailQueue();
 </script>
+
+<svelte:head>
+    <title>Email Manager - Email Queue</title>
+    <meta content="Email Manager - Email Queue" name="description"/>
+</svelte:head>
+
 <div class="container mx-auto px-4 py-8">
     <!-- 헤더 섹션 -->
     <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 class="text-3xl font-bold text-gray-900">메일 큐</h1>
-        <div class="flex flex-wrap items-center gap-3">
-            <select
-                    class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    on:change={changePageSize}
-                    value={pagination.pageSize}
-            >
-                <option value="5">5개씩 보기</option>
-                <option value="10">10개씩 보기</option>
-                <option value="20">20개씩 보기</option>
-                <option value="50">50개씩 보기</option>
-            </select>
-
-            <a
-                    class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    href="/mail-queue/create"
-            >
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-                </svg>
-                새 메일 추가
-            </a>
-        </div>
+        <h1 class="text-3xl font-bold dark:text-white">Email Queue</h1>
     </div>
 
     <!-- 검색 필터 UI 추가 (헤더 섹션 아래에 배치) -->
-    <div class="mb-6 flex gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+    <div class="mb-6 flex gap-4 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm dark:text-white">
         <div class="flex flex-1 items-center gap-4">
-            <select
-                bind:value={searchFilters.status}
-                class="w-48 rounded-lg border border-gray-300 px-3 py-2"
+            <Select
+                    bind:value={searchFilters.status}
+                    onchange={applyFilters}
             >
                 {#each statusOptions as option}
                     <option value={option.value}>{option.label}</option>
                 {/each}
-            </select>
+            </Select>
 
-            <input
-                type="text"
-                bind:value={searchFilters.subject}
-                placeholder="제목으로 검색..."
-                class="flex-1 rounded-lg border border-gray-300 px-3 py-2"
+            <Input
+                    bind:value={searchFilters.subject}
+                    onchange={applyFilters}
+                    placeholder="제목으로 검색..."
+                    type="text"
             />
         </div>
 
-        <div class="flex items-center gap-2">
-            <button
-                on:click={applyFilters}
-                class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-            >
+        <ButtonGroup>
+            <Button onclick={applyFilters} class="dark:text-white">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-            </svg>
+                    <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round"
+                          stroke-width="2"/>
+                </svg>
                 검색
-            </button>
-
-            <button
-                on:click={resetFilters}
-                class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
+            </Button>
+            <Button onclick={resetFilters} class="dark:text-white">
                 초기화
-            </button>
-        </div>
+            </Button>
+        </ButtonGroup>
     </div>
 
     {#if mailQueuePage.content.length > 0}
         <!-- 테이블 섹션 -->
-        <div class="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                    <tr>
-                        {#each ['id', 'sender', 'subject', 'status', 'createdAt'] as column}
-                            <th
-                                    class="group px-6 py-3.5 text-left text-sm font-semibold text-gray-900"
-                                    on:click={() => changeSort(column)}
-                            >
-                                <div class="flex cursor-pointer items-center gap-2 hover:text-blue-600">
-                                    {column}
-                                    {#if pagination.sortBy === column}
-                                        <svg class="h-4 w-4 transition-transform {pagination.sortDirection === 'desc' ? 'rotate-180' : ''}"
-                                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                  d="M5 15l7-7 7 7"/>
-                                        </svg>
-                                    {:else}
-                                        <svg class="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100"
-                                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                  d="M5 15l7-7 7 7"/>
-                                        </svg>
-                                    {/if}
-                                </div>
-                            </th>
-                        {/each}
-                        <th class="px-6 py-3.5 text-right text-sm font-semibold text-gray-900">
-                            액션
-                        </th>
-                    </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                    {#each mailQueuePage.content as mail}
-                        <tr class="transition-colors hover:bg-gray-50">
-                            <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                {mail.id}
-                            </td>
-                            <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                                {mail.sender}
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-900">
-                                {mail.subject}
-                            </td>
-                            <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                {mail.status}
-                            </td>
-                            <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                {new Date(mail.createdAt).toLocaleString()}
-                            </td>
-                            <td class="whitespace-nowrap px-6 py-4 text-right text-sm">
-                                <div class="flex items-center justify-end gap-3">
-                                    <a
-                                            href={`/mail-queue/edit/${mail.id}`}
-                                            class="font-medium text-blue-600 transition-colors hover:text-blue-700"
-                                    >
-                                        수정
-                                    </a>
-                                    <button
-                                            on:click={() => deleteMail(mail.id)}
-                                            class="font-medium text-red-600 transition-colors hover:text-red-700"
-                                    >
-                                        삭제
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
+        <Card size="xl">
+            <Table>
+                <TableHead class="dark:text-white">
+                    {#each ['id', 'sender', 'subject', 'status', 'createdAt'] as column}
+                        <TableHeadCell onclick={() => changeSort(column)}>
+                            <div class="flex cursor-pointer items-center gap-2 hover:text-blue-600">
+                                {column}
+                                {#if pagination.sortBy === column}
+                                    <svg class="h-4 w-4 transition-transform {pagination.sortDirection === 'desc' ? 'rotate-180' : ''}"
+                                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M5 15l7-7 7 7"/>
+                                    </svg>
+                                {:else}
+                                    <svg class="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100"
+                                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M5 15l7-7 7 7"/>
+                                    </svg>
+                                {/if}
+                            </div>
+                        </TableHeadCell>
                     {/each}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
+                </TableHead>
+                <TableBody class="dark:text-white">
+                    {#each mailQueuePage.content as mail}
+                        <TableBodyRow>
+                            <TableBodyCell>{mail.id}</TableBodyCell>
+                            <TableBodyCell>{mail.sender}</TableBodyCell>
+                            <TableBodyCell>{mail.subject}</TableBodyCell>
+                            <TableBodyCell>{mail.status}</TableBodyCell>
+                            <TableBodyCell>{new Date(mail.createdAt).toLocaleString()}</TableBodyCell>
+                        </TableBodyRow>
+                    {/each}
+                </TableBody>
+            </Table>
+        </Card>
         <!-- 페이지네이션 섹션 -->
-        <div class="mt-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <p class="text-sm text-gray-700">
-                <span class="font-medium text-gray-900">
+        <div class="mt-6 flex flex-col items-center justify-between gap-4 sm:flex-row dark:text-white">
+            <p class="text-sm">
+                <span class="font-medium">
                     {pagination.currentPage * pagination.pageSize + 1}
                 </span>
                 -
-                <span class="font-medium text-gray-900">
+                <span class="font-medium">
                     {Math.min((pagination.currentPage + 1) * pagination.pageSize, mailQueuePage.totalElements)}
                 </span>
                 <span class="mx-1">of</span>
-                <span class="font-medium text-gray-900">{mailQueuePage.totalElements}</span>
+                <span class="font-medium">{mailQueuePage.totalElements}</span>
                 개 항목
             </p>
 
             <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
                 <button
-                        class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                        class="relative inline-flex items-center rounded-l-md px-2 py-2  ring-1 ring-inset focus:z-20 focus:outline-offset-0 disabled:text-gray-500/50"
                         disabled={pagination.currentPage === 0}
                         on:click={() => changePage(0)}
                 >
@@ -313,7 +271,7 @@
                 </button>
 
                 <button
-                        class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                        class="relative inline-flex items-center px-3 py-2 text-sm font-medium  ring-1 ring-inset focus:z-20 focus:outline-offset-0 disabled:text-gray-500/50"
                         disabled={pagination.currentPage === 0}
                         on:click={() => changePage(pagination.currentPage - 1)}
                 >
@@ -326,10 +284,10 @@
                     i === mailQueuePage.totalPages - 1 ||
                     (i >= pagination.currentPage - 1 && i <= pagination.currentPage + 1)}
                         <button
-                                class="relative inline-flex items-center px-4 py-2 text-sm font-semibold {
+                                class="relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset {
                                 pagination.currentPage === i
-                                    ? 'z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
-                                    : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+                                    ? 'z-10 bg-gray-300 dark:bg-gray-700'
+                                    : 'focus:z-20 focus:outline-offset-0'
                             }"
                                 on:click={() => changePage(i)}
                                 aria-current={pagination.currentPage === i ? 'page' : undefined}
@@ -337,14 +295,14 @@
                             {i + 1}
                         </button>
                     {:else if (i === pagination.currentPage - 2 || i === pagination.currentPage + 2)}
-                        <span class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">
+                        <span class="relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset focus:outline-offset-0">
                             ...
                         </span>
                     {/if}
                 {/each}
 
                 <button
-                        class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                        class="relative inline-flex items-center px-3 py-2 text-sm font-medium ring-1 ring-inset focus:z-20 focus:outline-offset-0 disabled:text-gray-500/50"
                         disabled={pagination.currentPage === mailQueuePage.totalPages - 1}
                         on:click={() => changePage(pagination.currentPage + 1)}
                 >
@@ -352,7 +310,7 @@
                 </button>
 
                 <button
-                        class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                        class="relative inline-flex items-center rounded-r-md px-2 py-2 ring-1 ring-inset focus:z-20 focus:outline-offset-0 disabled:text-gray-500/50"
                         disabled={pagination.currentPage === mailQueuePage.totalPages - 1}
                         on:click={() => changePage(mailQueuePage.totalPages - 1)}
                 >
@@ -363,14 +321,22 @@
                               clip-rule="evenodd"/>
                     </svg>
                 </button>
-            </nav>
+                <Select
+                        bind:value={pagination.pageSize}
+                        onchange={changePageSize}
+                        class="ml-4"
+                >
+                    {#each pageSizeOptions as option}
+                        <option value={option.value}>{option.label}</option>
+                    {/each}
+                </Select></nav>
         </div>
 
     {:else}
         <!-- 빈 상태 표시 -->
-        <div class="rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
+        <div class="rounded-lg border p-12 text-center shadow-sm text-gray-200">
             <svg
-                    class="mx-auto h-16 w-16 text-gray-400"
+                    class="mx-auto h-16 w-16 text-black dark:text-white"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -382,17 +348,7 @@
                         d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                 />
             </svg>
-            <h3 class="mt-4 text-lg font-medium text-gray-900">메일 큐가 비어 있습니다</h3>
-            <p class="mt-2 text-sm text-gray-500">새 메일을 추가하여 시작하세요.</p>
-            <a
-                    href="/mail-queue/create"
-                    class="mt-6 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-                새 메일 추가
-            </a>
+            <h3 class="mt-4 text-lg font-medium text-black dark:text-white">조건의 맞는 자료가 없습니다.</h3>
         </div>
     {/if}
 </div>

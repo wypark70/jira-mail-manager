@@ -1,13 +1,11 @@
 package com.samsungds.ims.mail.handler;
 
 import com.samsungds.ims.mail.model.EmailQueue;
-import com.samsungds.ims.mail.model.EmailQueueRecipient;
 import com.samsungds.ims.mail.model.EmailQueueContent;
-import com.samsungds.ims.mail.repository.EmailQueueRepository;
-import com.samsungds.ims.mail.repository.EmailQueueRecipientRepository;
+import com.samsungds.ims.mail.model.EmailQueueRecipient;
 import com.samsungds.ims.mail.repository.EmailQueueContentRepository;
-
-import lombok.NoArgsConstructor;
+import com.samsungds.ims.mail.repository.EmailQueueRecipientRepository;
+import com.samsungds.ims.mail.repository.EmailQueueRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.subethamail.smtp.MessageHandler;

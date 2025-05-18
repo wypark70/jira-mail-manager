@@ -2,6 +2,10 @@ package com.samsungds.ims.mail.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -15,6 +19,12 @@ public class EmailHistoryRecipient {
 
     @Enumerated(EnumType.STRING)
     private EmailQueueRecipient.RecipientType type;  // 수신자 유형 (TO, CC, BCC)
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 
     @ManyToOne
     @JoinColumn(name = "email_history_id")

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
+    import { Card } from "flowbite-svelte";
 
     interface Stats {
         queuedCount: number;
@@ -71,8 +72,8 @@
     });
 </script>
 
-<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-    <div class="rounded-lg bg-white p-6 shadow-md">
+<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 text-gray-700 dark:text-gray-300">
+    <Card size="xl" class="rounded-lg p-6 shadow-md" href="/mail-queue?status=QUEUED">
         <div class="flex items-center">
             <div class="rounded-full bg-blue-100 p-3 text-blue-500">
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,13 +86,13 @@
                 </svg>
             </div>
             <div class="ml-4">
-                <h2 class="text-sm text-gray-600">Queued</h2>
-                <p class="text-2xl font-semibold text-gray-800">{stats.queuedCount}</p>
+                <h2 class="text-sm">Queued</h2>
+                <p class="text-2xl font-semibold">{stats.queuedCount}</p>
             </div>
         </div>
-    </div>
+    </Card>
 
-    <div class="rounded-lg bg-white p-6 shadow-md">
+    <Card size="xl" class="rounded-lg p-6 shadow-md" href="/mail-queue?status=RETRY">
         <div class="flex items-center">
             <div class="rounded-full bg-yellow-100 p-3 text-yellow-500">
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,13 +105,13 @@
                 </svg>
             </div>
             <div class="ml-4">
-                <h2 class="text-sm text-gray-600">Retry</h2>
-                <p class="text-2xl font-semibold text-gray-800">{stats.retryCount}</p>
+                <h2 class="text-sm">Retry</h2>
+                <p class="text-2xl font-semibold">{stats.retryCount}</p>
             </div>
         </div>
-    </div>
+    </Card>
 
-    <div class="rounded-lg bg-white p-6 shadow-md">
+    <Card size="xl" class="rounded-lg p-6 shadow-md" href="/mail-queue?status=SENT">
         <div class="flex items-center">
             <div class="rounded-full bg-green-100 p-3 text-green-500">
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,13 +124,13 @@
                 </svg>
             </div>
             <div class="ml-4">
-                <h2 class="text-sm text-gray-600">Sent</h2>
-                <p class="text-2xl font-semibold text-gray-800">{stats.sentCount}</p>
+                <h2 class="text-sm">Sent</h2>
+                <p class="text-2xl font-semibold">{stats.sentCount}</p>
             </div>
         </div>
-    </div>
+    </Card>
 
-    <div class="rounded-lg bg-white p-6 shadow-md">
+    <Card size="xl" class="rounded-lg p-6 shadow-md" href="/mail-queue?status=FAILED">
         <div class="flex items-center">
             <div class="rounded-full bg-red-100 p-3 text-red-500">
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,9 +143,9 @@
                 </svg>
             </div>
             <div class="ml-4">
-                <h2 class="text-sm text-gray-600">Failed</h2>
-                <p class="text-2xl font-semibold text-gray-800">{stats.failedCount}</p>
+                <h2 class="text-sm">Failed</h2>
+                <p class="text-2xl font-semibold">{stats.failedCount}</p>
             </div>
         </div>
-    </div>
+    </Card>
 </div>

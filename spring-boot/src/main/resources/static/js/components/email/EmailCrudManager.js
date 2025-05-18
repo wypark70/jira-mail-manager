@@ -1,10 +1,4 @@
 // EmailCrudManager.js - 이메일 CRUD 매니저 컴포넌트
-import {EmailUtils} from './EmailUtils.js';
-import {EmailList} from './EmailList.js';
-import {EmailAdd} from './EmailAdd.js';
-import {EmailView} from './EmailView.js';
-import {EmailEdit} from './EmailEdit.js';
-import {EmailDelete} from './EmailDelete.js';
 
 export class EmailCrudManager extends HTMLElement {
     constructor() {
