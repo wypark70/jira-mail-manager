@@ -13,6 +13,7 @@
         <NavUl>
             <NavLi href="/">Dashboard</NavLi>
             <NavLi href="/mail-queue">Mail Queue</NavLi>
+            <NavLi href="/mail-history">Mail history</NavLi>
             <NavLi href="/log-viewer">Log viewer</NavLi>
             <DarkMode/>
         </NavUl>

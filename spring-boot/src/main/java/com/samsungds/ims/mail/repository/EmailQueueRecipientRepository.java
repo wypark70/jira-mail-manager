@@ -5,14 +5,13 @@ import com.samsungds.ims.mail.model.EmailQueueRecipient;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 @Repository
 public interface EmailQueueRecipientRepository extends JpaRepository<EmailQueueRecipient, Long> {
-    List<EmailQueueRecipient> findByEmailQueueId(Long emailQueueId);
-    
-    /**
-     * 이메일 주소와 이메일 큐로 수신자 존재 여부 확인
-     */
     boolean existsByEmailAndEmailQueue(String email, EmailQueue emailQueue);
+    void deleteAllByEmailQueueIdIn(Collection<Long> emailQueueIds);
+    List<EmailQueueRecipient> findAllByEmailQueueIdIn(Collection<Long> emailQueueIds);
+    List<EmailQueueRecipient> findByEmailQueueId(Long emailQueueId);
 }

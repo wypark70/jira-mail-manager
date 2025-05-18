@@ -3,7 +3,8 @@ package com.samsungds.ims.mail.controller;
 import com.samsungds.ims.mail.dto.EmailQueueStats;
 import com.samsungds.ims.mail.model.EmailQueue;
 import com.samsungds.ims.mail.repository.EmailQueueRepository;
-import com.samsungds.ims.mail.service.EmailQueueTransactionService;
+import com.samsungds.ims.mail.service.EmailHistoryService;
+import com.samsungds.ims.mail.service.EmailQueueService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,7 +34,8 @@ import java.util.concurrent.*;
 public class EmailQueueController {
     private final EmailQueueRepository emailQueueRepository;
 
-    private final EmailQueueTransactionService emailQueueTransactionService;
+    private final EmailHistoryService emailHistoryService;
+    private final EmailQueueService emailQueueService;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     /**
@@ -112,7 +115,7 @@ public class EmailQueueController {
      */
     @GetMapping("/stats")
     public ResponseEntity<EmailQueueStats> getQueueStats() {
-        EmailQueueStats stats = emailQueueTransactionService.getQueueStats();
+        EmailQueueStats stats = emailQueueService.getQueueStats();
         return ResponseEntity.ok(stats);
     }
 
@@ -134,7 +137,7 @@ public class EmailQueueController {
         // 주기적인 통계 업데이트 작업 예약
         ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(() -> {
             try {
-                EmailQueueStats stats = emailQueueTransactionService.getQueueStats();
+                EmailQueueStats stats = emailQueueService.getQueueStats();
                 emitter.send(stats);
             } catch (Exception e) {
                 emitter.completeWithError(e);
@@ -229,7 +232,7 @@ public class EmailQueueController {
 
         return ResponseEntity.ok(successResponse);
     }
-    
+
     /**
      * 이메일 상세 정보 조회
      */
@@ -242,6 +245,7 @@ public class EmailQueueController {
     /**
      * 이메일 검색 및 필터링
      */
+    @SuppressWarnings("DuplicatedCode")
     @GetMapping("/search")
     public ResponseEntity<Page<EmailQueue>> searchEmails(
             @RequestParam(required = false) String status,
@@ -265,7 +269,7 @@ public class EmailQueueController {
             // endDate가 있으면 종료시간을 해당 날짜의 23:59:59로 설정
             LocalDateTime end = endDate != null ? endDate.atTime(LocalTime.MAX) : null;
 
-            Page<EmailQueue> emails = emailQueueRepository.findByStatusAndSubject(
+            Page<EmailQueue> emails = emailQueueRepository.findByStatusAndSubjectAndCreatedAtBetween(
                     emailStatus,
                     subject,
                     start,
@@ -277,6 +281,17 @@ public class EmailQueueController {
         } catch (IllegalArgumentException e) {
             log.error("검색 파라미터 오류", e);
             return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping("/move-to-history")
+    public ResponseEntity<String> moveToHistory() {
+        try {
+            int movedCount = emailHistoryService.moveAllSentEmailsToHistory();
+            return ResponseEntity.ok(String.format("성공적으로 %d개의 이메일을 히스토리로 이동했습니다.", movedCount));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("이메일 히스토리 이동 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
 

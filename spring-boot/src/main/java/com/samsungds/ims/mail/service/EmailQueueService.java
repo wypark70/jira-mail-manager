@@ -6,6 +6,8 @@ import com.samsungds.ims.mail.repository.EmailQueueRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +22,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class EmailQueueTransactionService {
+public class EmailQueueService {
 
     private final EmailQueueRepository emailQueueRepository;
 
@@ -211,7 +213,7 @@ public class EmailQueueTransactionService {
     public EmailQueueStats getQueueStats() {
         EmailQueueStats stats = new EmailQueueStats();
         stats.setTotalCount(emailQueueRepository.count());
-        
+
         // 기본값 0으로 설정
         stats.setQueuedCount(0);
         stats.setProcessingCount(0);
@@ -219,15 +221,15 @@ public class EmailQueueTransactionService {
         stats.setFailedCount(0);
         stats.setRetryCount(0);
         stats.setScheduledCount(0);
-        
+
         // 모든 상태 개수를 한 번의 쿼리로 조회
         List<Object[]> statusCounts = emailQueueRepository.countAllByStatus();
-        
+
         // 조회된 결과를 상태별로 매핑
         for (Object[] result : statusCounts) {
             EmailQueue.EmailStatus status = (EmailQueue.EmailStatus) result[0];
             long count = ((Number) result[1]).longValue();
-            
+
             switch (status) {
                 case QUEUED:
                     stats.setQueuedCount(count);
@@ -255,8 +257,24 @@ public class EmailQueueTransactionService {
                     break;
             }
         }
-        
+
         return stats;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<EmailQueue> findByStatusAndSubjectAndCreatedAtBetween(
+            EmailQueue.EmailStatus status,
+            String subject,
+            LocalDateTime start,
+            LocalDateTime end,
+            Pageable pageable) {
+        return emailQueueRepository.findByStatusAndSubjectAndCreatedAtBetween(
+                status,
+                subject,
+                start,
+                end,
+                pageable
+        );
     }
 
 }

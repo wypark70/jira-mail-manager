@@ -67,8 +67,4 @@ public class SmtpInterceptorServerService {
     public boolean isRunning() {
         return smtpServer != null && smtpServer.isRunning();
     }
-
-    public String getServerStatus() {
-        return isRunning() ? "실행 중" : "중지됨";
-    }
 }

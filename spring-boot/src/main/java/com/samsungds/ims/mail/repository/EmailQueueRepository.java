@@ -44,7 +44,7 @@ public interface EmailQueueRepository extends JpaRepository<EmailQueue, Long> {
            "(:start IS NULL OR e.createdAt >= :start) AND " +
            "(:end IS NULL OR e.createdAt <= :end) AND " +
            "(:subject IS NULL OR LOWER(e.subject) LIKE LOWER(CONCAT('%', :subject, '%')))")
-    Page<EmailQueue> findByStatusAndSubject(
+    Page<EmailQueue> findByStatusAndSubjectAndCreatedAtBetween(
         @Param("status") EmailQueue.EmailStatus status,
         @Param("subject") String subject,
         @Param("start") LocalDateTime start,

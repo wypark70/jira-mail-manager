@@ -63,8 +63,9 @@ public class SmtpInterceptorController {
     @GetMapping("/status")
     public Map<String, Object> getServerStatus() {
         Map<String, Object> status = new HashMap<>();
-        status.put("running", smtpInterceptorServerService.isRunning());
-        status.put("status", smtpInterceptorServerService.getServerStatus());
+        boolean isRunning = smtpInterceptorServerService.isRunning();
+        status.put("running", isRunning);
+        status.put("status", isRunning ? "RUNNING" : "STOPPED");
         return status;
     }
 }

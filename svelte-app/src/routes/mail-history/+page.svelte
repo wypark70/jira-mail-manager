@@ -1,20 +1,18 @@
 <script lang="ts">
     import {
+        Datepicker,
+        Modal,
         Button,
         Card,
-        Datepicker,
         Input,
-        Modal,
-        Select,
         Table,
         TableBody,
         TableBodyCell,
         TableBodyRow,
         TableHead,
-        TableHeadCell
+        TableHeadCell, Select
     } from "flowbite-svelte";
-    import {page} from '$app/state';
-
+    
     const springApiBaseUrl = 'http://localhost:8080/api';
 
     interface PageResponse<T> {
@@ -24,18 +22,20 @@
         currentPage: number;
     }
 
-    interface EmailQueue {
+    interface EmailHistory {
         id: number;
-        recipient: string;
+        originalEmailId: number;
         sender: string;
-        status: string;
         subject: string;
+        status: string;
         createdAt: string;
-        sentAt: string | null;
+        sentAt: string;
+        processorId: string;
+        errorMessage: string | null;
+        retryCount: number;
     }
 
     interface SearchFilters {
-        status: string;
         subject: string;
         startDate: Date | undefined;
         endDate: Date | undefined;
@@ -48,26 +48,16 @@
         sortDirection: string;
     }
 
-    // 검색 필터에 날짜 범위 추가
     let searchFilters: SearchFilters = {
-        status: page.url.searchParams.get('status') || '',
         subject: '',
-        startDate: undefined,  // 시작일
-        endDate: undefined     // 종료일
+        startDate: undefined,
+        endDate: undefined
     };
-
-    // 상태 옵션 정의
-    const statusOptions = [
-        {value: 'QUEUED', label: 'QUEUED'},
-        {value: 'RETRY', label: 'RETRY'},
-        {value: 'SENT', label: 'SENT'},
-        {value: 'FAILED', label: 'FAILED'}
-    ];
 
     let pagination: PaginationState = {
         currentPage: 0,
         pageSize: 10,
-        sortBy: 'createdAt',
+        sortBy: 'sentAt',
         sortDirection: 'desc'
     };
 
@@ -78,7 +68,7 @@
         {value: 50, label: '50개씩 보기'}
     ];
 
-    let mailQueuePage: PageResponse<EmailQueue> = {
+    let mailHistoryPage: PageResponse<EmailHistory> = {
         content: [],
         totalPages: 0,
         totalElements: 0,
@@ -87,14 +77,12 @@
 
     // 모달 상태 관리
     let showModal = false;
-    let selectedMail: EmailQueue | null = null;
+    let selectedMail: EmailHistory | null = null;
 
-    // loadMailQueue 함수 수정
-    async function loadMailQueue(): Promise<void> {
+    async function loadMailHistory(): Promise<void> {
         const {currentPage, pageSize, sortBy, sortDirection} = pagination;
-        const {status, subject, startDate, endDate} = searchFilters;
+        const {subject, startDate, endDate} = searchFilters;
 
-        // 검색 파라미터 구성
         const params = new URLSearchParams({
             page: currentPage.toString(),
             size: pageSize.toString(),
@@ -102,9 +90,6 @@
             direction: sortDirection
         });
 
-        if (status) {
-            params.append('status', status);
-        }
         if (subject) {
             params.append('subject', subject);
         }
@@ -115,11 +100,11 @@
             params.append('endDate', formatDate(endDate));
         }
 
-        const response = await fetch(`${springApiBaseUrl}/email-queue/search?${params}`);
+        const response = await fetch(`${springApiBaseUrl}/email-history/search?${params}`);
         if (response.ok) {
-            mailQueuePage = await response.json();
+            mailHistoryPage = await response.json();
         } else {
-            console.error('메일 큐 로딩 실패:', await response.json());
+            console.error('메일 히스토리 로딩 실패:', await response.json());
         }
     }
 
@@ -130,26 +115,23 @@
         return `${year}-${month}-${day}`;
     }
 
-
-    // 필터 초기화 함수 수정
     async function resetFilters(): Promise<void> {
-        searchFilters.status = '';
         searchFilters.subject = '';
-        searchFilters.startDate = undefined
+        searchFilters.startDate = undefined;
         searchFilters.endDate = undefined;
         await applyFilters();
     }
 
     async function changePage(newPage: number): Promise<void> {
         pagination.currentPage = newPage;
-        await loadMailQueue();
+        await loadMailHistory();
     }
 
     async function changePageSize(event: Event): Promise<void> {
         const select = event.target as HTMLSelectElement;
         pagination.pageSize = parseInt(select.value);
-        pagination.currentPage = 0; // 페이지 크기 변경시 첫 페이지로 이동
-        await loadMailQueue();
+        pagination.currentPage = 0;
+        await loadMailHistory();
     }
 
     async function changeSort(column: string): Promise<void> {
@@ -159,12 +141,11 @@
             pagination.sortBy = column;
             pagination.sortDirection = 'asc';
         }
-        await loadMailQueue();
+        await loadMailHistory();
     }
 
-    // 메일 상세 정보를 가져오는 함수
     async function fetchMailDetail(id: number) {
-        const response = await fetch(`${springApiBaseUrl}/email-queue/${id}`);
+        const response = await fetch(`${springApiBaseUrl}/email-history/${id}`);
         if (response.ok) {
             selectedMail = await response.json();
             showModal = true;
@@ -173,74 +154,58 @@
         }
     }
 
-    // 필터 적용 함수 수정
     async function applyFilters(): Promise<void> {
         pagination.currentPage = 0;
-        await loadMailQueue();
+        await loadMailHistory();
     }
 
     // 초기 데이터 로드
-    loadMailQueue();
+    loadMailHistory();
 </script>
 
 <svelte:head>
-    <title>Email Manager - Email Queue</title>
-    <meta content="Email Manager - Email Queue" name="description"/>
+    <title>Email Manager - Email History</title>
+    <meta content="Email Manager - Email History" name="description"/>
 </svelte:head>
 
 <div class="container mx-auto px-4 py-8">
-    <!-- 헤더 섹션 -->
     <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 class="text-3xl font-bold dark:text-white">Email Queue</h1>
+        <h1 class="text-3xl font-bold dark:text-white">Email History</h1>
     </div>
 
     <div class="mb-6 flex flex-col gap-4 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm dark:text-white">
         <div class="flex flex-wrap items-end gap-4">
-            <!-- 상태 필터 -->
-            <div class="flex-1 min-w-[200px]">
-                <label class="mb-2 block text-sm font-medium" for="status">상태</label>
-                <Select
-                        bind:value={searchFilters.status}
-                        class="w-full"
-                        id="status"
-                >
-                    {#each statusOptions as option}
-                        <option value={option.value}>{option.label}</option>
-                    {/each}
-                </Select>
-            </div>
-
             <!-- 제목 검색 -->
             <div class="flex-1 min-w-[200px]">
-                <label class="mb-2 block text-sm font-medium" for="subject">제목</label>
+                <label for="subject" class="mb-2 block text-sm font-medium">제목</label>
                 <Input
-                        bind:value={searchFilters.subject}
-                        class="w-full"
-                        id="subject"
-                        placeholder="제목으로 검색..."
-                        type="text"
+                    id="subject"
+                    class="w-full"
+                    bind:value={searchFilters.subject}
+                    placeholder="제목으로 검색..."
+                    type="text"
                 />
             </div>
 
-            <!-- 시작일 -->
+            <!-- 발송일 시작 -->
             <div class="flex-1 min-w-[200px]">
-                <label class="mb-2 block text-sm font-medium" for="startDate">생성일 시작</label>
+                <label for="startDate" class="mb-2 block text-sm font-medium">발송일 시작</label>
                 <Datepicker
-                        bind:value={searchFilters.startDate}
-                        class="w-full"
-                        id="startDate"
-                        placeholder="생성일 시작 선택"
+                    id="startDate"
+                    class="w-full"
+                    bind:value={searchFilters.startDate}
+                    placeholder="발송일 시작 선택"
                 />
             </div>
 
-            <!-- 종료일 -->
+            <!-- 발송일 종료 -->
             <div class="flex-1 min-w-[200px]">
-                <label class="mb-2 block text-sm font-medium" for="endDate">생성일 종료</label>
+                <label for="endDate" class="mb-2 block text-sm font-medium">발송일 종료</label>
                 <Datepicker
-                        bind:value={searchFilters.endDate}
-                        class="w-full"
-                        id="endDate"
-                        placeholder="생성일 종료 선택"
+                    id="endDate"
+                    class="w-full"
+                    bind:value={searchFilters.endDate}
+                    placeholder="발송일 종료 선택"
                 />
             </div>
 
@@ -248,8 +213,7 @@
             <div class="flex gap-2">
                 <Button color="primary" onclick={applyFilters}>
                     <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round"
-                              stroke-linejoin="round" stroke-width="2"/>
+                        <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
                     </svg>
                     검색
                 </Button>
@@ -260,23 +224,16 @@
         </div>
     </div>
 
-    {#if mailQueuePage.content.length > 0}
-        <!-- 테이블 섹션 -->
+    {#if mailHistoryPage.content.length > 0}
         <Card size="xl">
             <Table>
                 <TableHead class="dark:text-white">
-                    {#each ['id', 'sender', 'subject', 'status', 'createdAt'] as column}
+                    {#each ['id', 'sender', 'subject', 'sentAt'] as column}
                         <TableHeadCell onclick={() => changeSort(column)}>
                             <div class="flex cursor-pointer items-center gap-2 hover:text-blue-600">
                                 {column}
                                 {#if pagination.sortBy === column}
                                     <svg class="h-4 w-4 transition-transform {pagination.sortDirection === 'desc' ? 'rotate-180' : ''}"
-                                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M5 15l7-7 7 7"/>
-                                    </svg>
-                                {:else}
-                                    <svg class="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100"
                                          fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                               d="M5 15l7-7 7 7"/>
@@ -287,22 +244,19 @@
                     {/each}
                 </TableHead>
                 <TableBody class="dark:text-white">
-                    {#each mailQueuePage.content as mail}
-                        <!-- 테이블 내용 부분 수정 -->
+                    {#each mailHistoryPage.content as mail}
                         <TableBodyRow>
                             <TableBodyCell>{mail.id}</TableBodyCell>
                             <TableBodyCell>{mail.sender}</TableBodyCell>
                             <TableBodyCell>
-                                <!-- 제목을 클릭 가능한 버튼으로 변경 -->
                                 <button
-                                        class="text-left hover:text-blue-600 dark:hover:text-blue-400"
-                                        on:click={() => fetchMailDetail(mail.id)}
+                                    class="text-left hover:text-blue-600 dark:hover:text-blue-400"
+                                    on:click={() => fetchMailDetail(mail.id)}
                                 >
                                     {mail.subject}
                                 </button>
                             </TableBodyCell>
-                            <TableBodyCell>{mail.status}</TableBodyCell>
-                            <TableBodyCell>{new Date(mail.createdAt).toLocaleString()}</TableBodyCell>
+                            <TableBodyCell>{new Date(mail.sentAt).toLocaleString()}</TableBodyCell>
                         </TableBodyRow>
                     {/each}
                 </TableBody>
@@ -316,10 +270,10 @@
                 </span>
                 -
                 <span class="font-medium">
-                    {Math.min((pagination.currentPage + 1) * pagination.pageSize, mailQueuePage.totalElements)}
+                    {Math.min((pagination.currentPage + 1) * pagination.pageSize, mailHistoryPage.totalElements)}
                 </span>
                 <span class="mx-1">of</span>
-                <span class="font-medium">{mailQueuePage.totalElements}</span>
+                <span class="font-medium">{mailHistoryPage.totalElements}</span>
                 개 항목
             </p>
 
@@ -345,10 +299,10 @@
                     이전
                 </button>
 
-                {#each Array(mailQueuePage.totalPages) as _, i}
+                {#each Array(mailHistoryPage.totalPages) as _, i}
                     {#if i === pagination.currentPage ||
                     i === 0 ||
-                    i === mailQueuePage.totalPages - 1 ||
+                    i === mailHistoryPage.totalPages - 1 ||
                     (i >= pagination.currentPage - 1 && i <= pagination.currentPage + 1)}
                         <button
                                 class="relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset {
@@ -370,7 +324,7 @@
 
                 <button
                         class="relative inline-flex items-center px-3 py-2 text-sm font-medium ring-1 ring-inset focus:z-20 focus:outline-offset-0 disabled:text-gray-500/50"
-                        disabled={pagination.currentPage === mailQueuePage.totalPages - 1}
+                        disabled={pagination.currentPage === mailHistoryPage.totalPages - 1}
                         on:click={() => changePage(pagination.currentPage + 1)}
                 >
                     다음
@@ -378,8 +332,8 @@
 
                 <button
                         class="relative inline-flex items-center rounded-r-md px-2 py-2 ring-1 ring-inset focus:z-20 focus:outline-offset-0 disabled:text-gray-500/50"
-                        disabled={pagination.currentPage === mailQueuePage.totalPages - 1}
-                        on:click={() => changePage(mailQueuePage.totalPages - 1)}
+                        disabled={pagination.currentPage === mailHistoryPage.totalPages - 1}
+                        on:click={() => changePage(mailHistoryPage.totalPages - 1)}
                 >
                     <span class="sr-only">마지막으로</span>
                     <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -399,78 +353,85 @@
                 </Select>
             </nav>
         </div>
-
     {:else}
-        <!-- 빈 상태 표시 -->
         <div class="rounded-lg border p-12 text-center shadow-sm text-gray-200 dark:text-gray-700">
             <svg
-                    class="mx-auto h-16 w-16 text-black dark:text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                class="mx-auto h-16 w-16 text-black dark:text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
             >
                 <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="1.5"
-                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                 />
             </svg>
-            <h3 class="mt-4 text-lg font-medium text-black dark:text-white">조건의 맞는 자료가 없습니다.</h3>
+            <h3 class="mt-4 text-lg font-medium text-black dark:text-white">조건에 맞는 메일 히스토리가 없습니다.</h3>
         </div>
     {/if}
 </div>
 
-<!-- 모달 컴포넌트 추가 -->
 <Modal
-        autoclose
-        bind:open={showModal}
-        class="w-full"
-        size="xl"
+    bind:open={showModal}
+    size="xl"
+    autoclose
+    class="w-full"
 >
     {#if selectedMail}
         <div class="p-4">
-            <h2 class="mb-4 text-2xl font-bold">메일 상세 정보</h2>
-
+            <h2 class="mb-4 text-2xl font-bold">메일 히스토리 상세 정보</h2>
+            
             <div class="grid gap-4">
                 <div class="grid grid-cols-3 gap-4 border-b pb-2">
                     <div class="font-semibold">ID</div>
                     <div class="col-span-2">{selectedMail.id}</div>
                 </div>
-
+                
+                <div class="grid grid-cols-3 gap-4 border-b pb-2">
+                    <div class="font-semibold">원본 이메일 ID</div>
+                    <div class="col-span-2">{selectedMail.originalEmailId}</div>
+                </div>
+                
                 <div class="grid grid-cols-3 gap-4 border-b pb-2">
                     <div class="font-semibold">제목</div>
                     <div class="col-span-2">{selectedMail.subject}</div>
                 </div>
-
+                
                 <div class="grid grid-cols-3 gap-4 border-b pb-2">
                     <div class="font-semibold">보낸 사람</div>
                     <div class="col-span-2">{selectedMail.sender}</div>
                 </div>
 
                 <div class="grid grid-cols-3 gap-4 border-b pb-2">
-                    <div class="font-semibold">받는 사람</div>
-                    <div class="col-span-2">{selectedMail.recipient}</div>
+                    <div class="font-semibold">처리자 ID</div>
+                    <div class="col-span-2">{selectedMail.processorId}</div>
                 </div>
-
+                
                 <div class="grid grid-cols-3 gap-4 border-b pb-2">
-                    <div class="font-semibold">상태</div>
-                    <div class="col-span-2">{selectedMail.status}</div>
+                    <div class="font-semibold">재시도 횟수</div>
+                    <div class="col-span-2">{selectedMail.retryCount}</div>
                 </div>
-
+                
                 <div class="grid grid-cols-3 gap-4 border-b pb-2">
                     <div class="font-semibold">생성 시간</div>
                     <div class="col-span-2">{new Date(selectedMail.createdAt).toLocaleString()}</div>
                 </div>
+                
+                <div class="grid grid-cols-3 gap-4 border-b pb-2">
+                    <div class="font-semibold">발송 시간</div>
+                    <div class="col-span-2">{new Date(selectedMail.sentAt).toLocaleString()}</div>
+                </div>
 
-                {#if selectedMail.sentAt}
-                    <div class="grid grid-cols-3 gap-4 border-b pb-2">
-                        <div class="font-semibold">전송 시간</div>
-                        <div class="col-span-2">{new Date(selectedMail.sentAt).toLocaleString()}</div>
-                    </div>
+                {#if selectedMail.errorMessage}
+                <div class="grid grid-cols-3 gap-4 border-b pb-2">
+                    <div class="font-semibold">오류 메시지</div>
+                    <div class="col-span-2 text-red-600">{selectedMail.errorMessage}</div>
+                </div>
                 {/if}
             </div>
-
+            
             <div class="mt-4 flex justify-end gap-2">
                 <Button color="alternative" onclick={() => showModal = false}>
                     닫기

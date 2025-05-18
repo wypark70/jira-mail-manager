@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 public class EmailQueueBatchService implements SmartLifecycle {
 
     private final EmailQueueBatchAsyncService emailQueueBatchAsyncService;
-    private final EmailQueueTransactionService emailQueueTransactionService;
+    private final EmailQueueService emailQueueService;
     private final String processorId = generateProcessorId();
     private volatile boolean running = false;
     @Value("${mail.batch.batch-size:10}")
@@ -78,7 +78,7 @@ public class EmailQueueBatchService implements SmartLifecycle {
     /**
      * 대기 중인 이메일 처리 (20초마다 실행)
      */
-    @Scheduled(fixedDelay = 20000)
+    @Scheduled(cron = "0/20 * * * * *")
     public void processEmailQueue() {
         if (!running) {
             log.debug("이메일 큐 프로세서가 실행 중이 아닙니다.");
@@ -89,13 +89,13 @@ public class EmailQueueBatchService implements SmartLifecycle {
 
         try {
             // 타임아웃된 이메일 잠금 해제 (장애 복구)
-            emailQueueTransactionService.unlockTimedOutEmails();
+            emailQueueService.unlockTimedOutEmails();
 
             // 예약된 이메일 처리
-            emailQueueTransactionService.processScheduledEmails();
+            emailQueueService.processScheduledEmails();
 
             // 재시도 대상 이메일 처리
-            emailQueueTransactionService.processRetryEmails();
+            emailQueueService.processRetryEmails();
 
             // 처리할 이메일 목록 조회 및 비동기 처리
             processQueuedEmails();
@@ -114,7 +114,7 @@ public class EmailQueueBatchService implements SmartLifecycle {
         int totalEmailsProcessed = 0;
 
         for (int batch = 0; batch < batchSize && totalEmailsProcessed < batchSize; batch += concurrentBatchSize) {
-            List<EmailQueue> emailsToProcess = emailQueueTransactionService.fetchEmailsForProcessing(concurrentBatchSize);
+            List<EmailQueue> emailsToProcess = emailQueueService.fetchEmailsForProcessing(concurrentBatchSize);
 
             if (emailsToProcess.isEmpty()) {
                 log.info("더 이상 처리할 이메일이 없습니다");
@@ -149,7 +149,7 @@ public class EmailQueueBatchService implements SmartLifecycle {
      * 이메일 처리 결과 저장
      */
     private void saveEmailProcessingResults(List<EmailQueue> processedEmails) {
-        emailQueueTransactionService.saveProcessedEmails(processedEmails);
+        emailQueueService.saveProcessedEmails(processedEmails);
     }
 
     /**
@@ -223,7 +223,7 @@ public class EmailQueueBatchService implements SmartLifecycle {
 
         for (EmailQueue email : emails) {
             // 이메일 처리 전에 먼저 잠금 획득 시도
-            EmailQueue lockedEmail = emailQueueTransactionService.tryLockEmailInNewTransaction(email, processorId);
+            EmailQueue lockedEmail = emailQueueService.tryLockEmailInNewTransaction(email, processorId);
 
             if (lockedEmail != null) {
                 CompletableFuture<EmailQueue> future = emailQueueBatchAsyncService.processEmail(lockedEmail);

@@ -25,6 +25,18 @@
             console.error('실패한 이메일 재시도 오류:', error);
         }
     }
+
+    async function handleMoveSentToHistory() {
+        try {
+            const response = await fetch(`/api/email-queue/move-to-history`, {
+                method: 'POST'
+            });
+            const message = await response.text();
+            alertService.success(message);
+        } catch (error) {
+            console.error('실패한 이메일 재시도 오류:', error);
+        }
+    }
 </script>
 <div class="grid grid-cols-1 gap-6 md:grid-cols-2 dark:text-white">
     <Card
@@ -52,5 +64,13 @@
     >
         <h3 class="mb-2 text-lg font-semibold">실패한 이메일 재시도</h3>
         <p>발송 실패한 메일을 재시도 상태로 변경 합니다.</p>
+    </Card>
+    <Card
+            class="rounded-lg p-6 shadow-md transition-shadow hover:shadow-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+            onclick={handleMoveSentToHistory}
+            size="xl"
+    >
+        <h3 class="mb-2 text-lg font-semibold">발신한 이메일 이력 테이블로 이동</h3>
+        <p>발신 성공한 이메일을 이력 테이블로 이동처리 합니다.</p>
     </Card>
 </div>

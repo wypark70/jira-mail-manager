@@ -20,7 +20,7 @@ public class EmailHistory {
     private String subject;        // 제목
     private String processorId;    // 처리한 프로세서 ID
     private String errorMessage;   // 오류 메시지
-    private int retryCount;       // 재시도 횟수
+    private int retryCount;        // 재시도 횟수
     
     @Enumerated(EnumType.STRING)
     private EmailQueue.EmailStatus status;  // 최종 상태
