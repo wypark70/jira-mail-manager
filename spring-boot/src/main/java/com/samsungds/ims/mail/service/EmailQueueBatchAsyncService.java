@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.net.InetAddress;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -21,16 +23,27 @@ public class EmailQueueBatchAsyncService {
             log.info("이메일 ID {} 비동기 발송 처리 시작...", email.getId());
             log.info("이메일 발송 시작 - ID: {}, 제목: {}", email.getId(), email.getSubject());
             simulateEmailSending(email);
-            email.setProcessorId(null);
+            email.setProcessorId(generateProcessorId());
             email.setLocked(false);
             email.markAsSent();
             return CompletableFuture.completedFuture(email);
         } catch (Exception e) {
             log.error("이메일 ID {} 발송 실패: {}", email.getId(), e.getMessage());
-            email.setProcessorId(null);
             email.setLocked(false);
+            email.setProcessorId(generateProcessorId());
             email.incrementRetry(e.getMessage());
             return CompletableFuture.completedFuture(email);
+        }
+    }
+
+    // processorId 생성 방법
+    private String generateProcessorId() {
+        try {
+            return InetAddress.getLocalHost().getHostName() + "-"
+                    + ProcessHandle.current().pid() + "-"
+                    + UUID.randomUUID().toString().substring(0, 8);
+        } catch (Exception e) {
+            return UUID.randomUUID().toString();
         }
     }
 

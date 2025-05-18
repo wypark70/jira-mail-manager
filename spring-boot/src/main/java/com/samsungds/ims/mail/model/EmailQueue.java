@@ -94,14 +94,6 @@ public class EmailQueue {
         this.locked = false;
     }
 
-    // 편의 메서드: 처리 중 표시
-    public void markAsProcessing(String processorId) {
-        this.status = EmailStatus.PROCESSING;
-        this.processorId = processorId;
-        this.locked = true;
-        this.lockedAt = LocalDateTime.now();
-    }
-
     // 편의 메서드: 실패 표시
     public void markAsFailed(String errorMessage) {
         this.status = EmailStatus.FAILED;
