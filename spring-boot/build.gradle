@@ -9,7 +9,7 @@ version = '0.0.1-SNAPSHOT'
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(18)
     }
 }
 
@@ -63,10 +63,13 @@ tasks.named('processResources') {
     }
 }
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
 
 bootRun {
-    systemProperty "file.encoding", "UTF-8"
+    jvmArgs = [
+            "-Dspring.profiles.active=local",
+            "-Dfile.encoding=UTF-8"
+    ]
 }

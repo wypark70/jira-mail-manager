@@ -18,9 +18,9 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class EmailQueueProcessorService implements SmartLifecycle {
+public class EmailQueueBatchService implements SmartLifecycle {
 
-    private final EmailQueueAsyncProcessorService emailQueueAsyncProcessorService;
+    private final EmailQueueBatchAsyncService emailQueueBatchAsyncService;
     private final EmailQueueTransactionService emailQueueTransactionService;
     private final String processorId = generateProcessorId();
     private volatile boolean running = false;
@@ -226,7 +226,7 @@ public class EmailQueueProcessorService implements SmartLifecycle {
             EmailQueue lockedEmail = emailQueueTransactionService.tryLockEmailInNewTransaction(email, processorId);
 
             if (lockedEmail != null) {
-                CompletableFuture<EmailQueue> future = emailQueueAsyncProcessorService.processEmail(lockedEmail);
+                CompletableFuture<EmailQueue> future = emailQueueBatchAsyncService.processEmail(lockedEmail);
                 futures.add(future);
             }
         }

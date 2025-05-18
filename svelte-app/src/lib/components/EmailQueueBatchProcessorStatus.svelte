@@ -2,8 +2,9 @@
     import {onMount} from 'svelte';
     import ConfirmModal from './ConfirmModal.svelte';
     import {Button, Card} from 'flowbite-svelte';
+    import {alertService} from "$lib/alerts";
 
-    const PROCESSOR_API = '/api/email-queue/processor';
+    const PROCESSOR_API = '/api/email-queue-batch/processor';
 
     // 상태 관리
     let processorStatus = $state({
@@ -31,9 +32,10 @@
             });
             const result = await response.json();
             if (result.success) {
+                alertService.success(result.message);
                 await loadProcessorStatus();
             } else {
-                console.error('프로세서 시작 실패:', result.message);
+                alertService.error(result.message);
             }
         } catch (error) {
             console.error('프로세서 시작 중 오류:', error);
@@ -47,9 +49,10 @@
             });
             const result = await response.json();
             if (result.success) {
+                alertService.success(result.message);
                 await loadProcessorStatus();
             } else {
-                console.error('프로세서 중지 실패:', result.message);
+                alertService.error(result.message);
             }
         } catch (error) {
             console.error('프로세서 중지 중 오류:', error);

@@ -11,8 +11,9 @@
         </NavBrand>
         <NavHamburger/>
         <NavUl>
-            <NavLi href="/">Home</NavLi>
-            <NavLi href="/server">Log viewer</NavLi>
+            <NavLi href="/">Dashboard</NavLi>
+            <NavLi href="/mail-queue">Mail Queue</NavLi>
+            <NavLi href="/log-viewer">Log viewer</NavLi>
             <DarkMode/>
         </NavUl>
     </Navbar>

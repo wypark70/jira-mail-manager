@@ -1,7 +1,8 @@
 <script lang="ts">
     import {
+        Datepicker,
+        Modal,
         Button,
-        ButtonGroup,
         Card,
         Input,
         Select,
@@ -23,7 +24,7 @@
         currentPage: number;
     }
 
-    interface Mail {
+    interface EmailQueue {
         id: number;
         recipient: string;
         sender: string;
@@ -33,6 +34,13 @@
         sentAt: string | null;
     }
 
+    interface SearchFilters {
+        status: string;
+        subject: string;
+        startDate: Date | undefined;
+        endDate: Date | undefined;
+    }
+
     interface PaginationState {
         currentPage: number;
         pageSize: number;
@@ -40,10 +48,12 @@
         sortDirection: string;
     }
 
-    // 검색 필터 상태 추가
-    let searchFilters = {
-        status: page.url.searchParams.get('status') || '',  // 상태 필터
-        subject: ''  // 제목 검색어
+    // 검색 필터에 날짜 범위 추가
+    let searchFilters: SearchFilters = {
+        status: page.url.searchParams.get('status') || '',
+        subject: '',
+        startDate: undefined,  // 시작일
+        endDate: undefined     // 종료일
     };
 
     // 상태 옵션 정의
@@ -58,7 +68,7 @@
         currentPage: 0,
         pageSize: 10,
         sortBy: 'createdAt',
-        sortDirection: 'asc'
+        sortDirection: 'desc'
     };
 
     const pageSizeOptions = [
@@ -68,17 +78,21 @@
         {value: 50, label: '50개씩 보기'}
     ];
 
-    let mailQueuePage: PageResponse<Mail> = {
+    let mailQueuePage: PageResponse<EmailQueue> = {
         content: [],
         totalPages: 0,
         totalElements: 0,
         currentPage: 0
     };
 
+    // 모달 상태 관리
+    let showModal = false;
+    let selectedMail: EmailQueue | null = null;
+
     // loadMailQueue 함수 수정
     async function loadMailQueue(): Promise<void> {
         const {currentPage, pageSize, sortBy, sortDirection} = pagination;
-        const {status, subject} = searchFilters;
+        const {status, subject, startDate, endDate} = searchFilters;
 
         // 검색 파라미터 구성
         const params = new URLSearchParams({
@@ -94,6 +108,12 @@
         if (subject) {
             params.append('subject', subject);
         }
+        if (startDate) {
+            params.append('startDate', formatDate(startDate));
+        }
+        if (endDate) {
+            params.append('endDate', formatDate(endDate));
+        }
 
         const response = await fetch(`${springApiBaseUrl}/email-queue/search?${params}`);
         if (response.ok) {
@@ -103,16 +123,20 @@
         }
     }
 
-    // 필터 적용 함수
-    async function applyFilters(): Promise<void> {
-        pagination.currentPage = 0;  // 필터 적용시 첫 페이지로 이동
-        await loadMailQueue();
+    function formatDate(date: Date): string {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
-    // 필터 초기화 함수
+
+    // 필터 초기화 함수 수정
     async function resetFilters(): Promise<void> {
         searchFilters.status = '';
         searchFilters.subject = '';
+        searchFilters.startDate = undefined
+        searchFilters.endDate = undefined;
         await applyFilters();
     }
 
@@ -138,19 +162,21 @@
         await loadMailQueue();
     }
 
-    async function deleteMail(id: number): Promise<void> {
-        if (confirm('정말로 삭제하시겠습니까?')) {
-            const response = await fetch(`${springApiBaseUrl}/emailQueues/${id}`, {
-                method: 'DELETE'
-            });
-            if (response.ok) {
-                await loadMailQueue(); // 삭제 후 현재 페이지 새로고침
-            } else {
-                const data = await response.json();
-                console.error('메일 삭제 실패:', data.error);
-                alert('메일 삭제에 실패했습니다.');
-            }
+    // 메일 상세 정보를 가져오는 함수
+    async function fetchMailDetail(id: number) {
+        const response = await fetch(`${springApiBaseUrl}/email-queue/${id}`);
+        if (response.ok) {
+            selectedMail = await response.json();
+            showModal = true;
+        } else {
+            console.error('메일 상세 정보 로딩 실패:', await response.json());
         }
+    }
+
+    // 필터 적용 함수 수정
+    async function applyFilters(): Promise<void> {
+        pagination.currentPage = 0;
+        await loadMailQueue();
     }
 
     // 초기 데이터 로드
@@ -168,38 +194,69 @@
         <h1 class="text-3xl font-bold dark:text-white">Email Queue</h1>
     </div>
 
-    <!-- 검색 필터 UI 추가 (헤더 섹션 아래에 배치) -->
-    <div class="mb-6 flex gap-4 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm dark:text-white">
-        <div class="flex flex-1 items-center gap-4">
-            <Select
+    <div class="mb-6 flex flex-col gap-4 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm dark:text-white">
+        <div class="flex flex-wrap items-end gap-4">
+            <!-- 상태 필터 -->
+            <div class="flex-1 min-w-[200px]">
+                <label for="status" class="mb-2 block text-sm font-medium">상태</label>
+                <Select
+                    id="status"
+                    class="w-full"
                     bind:value={searchFilters.status}
-                    onchange={applyFilters}
-            >
-                {#each statusOptions as option}
-                    <option value={option.value}>{option.label}</option>
-                {/each}
-            </Select>
+                >
+                    {#each statusOptions as option}
+                        <option value={option.value}>{option.label}</option>
+                    {/each}
+                </Select>
+            </div>
 
-            <Input
+            <!-- 제목 검색 -->
+            <div class="flex-1 min-w-[200px]">
+                <label for="subject" class="mb-2 block text-sm font-medium">제목</label>
+                <Input
+                    id="subject"
+                    class="w-full"
                     bind:value={searchFilters.subject}
-                    onchange={applyFilters}
                     placeholder="제목으로 검색..."
                     type="text"
-            />
-        </div>
+                />
+            </div>
 
-        <ButtonGroup>
-            <Button onclick={applyFilters} class="dark:text-white">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round"
-                          stroke-width="2"/>
-                </svg>
-                검색
-            </Button>
-            <Button onclick={resetFilters} class="dark:text-white">
-                초기화
-            </Button>
-        </ButtonGroup>
+            <!-- 시작일 -->
+            <div class="flex-1 min-w-[200px]">
+                <label for="startDate" class="mb-2 block text-sm font-medium">생성일 시작</label>
+                <Datepicker
+                    id="startDate"
+                    class="w-full"
+                    bind:value={searchFilters.startDate}
+                    placeholder="생성일 시작 선택"
+                />
+            </div>
+
+            <!-- 종료일 -->
+            <div class="flex-1 min-w-[200px]">
+                <label for="endDate" class="mb-2 block text-sm font-medium">생성일 종료</label>
+                <Datepicker
+                    id="endDate"
+                    class="w-full"
+                    bind:value={searchFilters.endDate}
+                    placeholder="생성일 종료 선택"
+                />
+            </div>
+
+            <!-- 버튼 그룹 -->
+            <div class="flex gap-2">
+                <Button color="primary" onclick={applyFilters}>
+                    <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                    </svg>
+                    검색
+                </Button>
+                <Button color="alternative" onclick={resetFilters}>
+                    초기화
+                </Button>
+            </div>
+        </div>
     </div>
 
     {#if mailQueuePage.content.length > 0}
@@ -230,10 +287,19 @@
                 </TableHead>
                 <TableBody class="dark:text-white">
                     {#each mailQueuePage.content as mail}
+                        <!-- 테이블 내용 부분 수정 -->
                         <TableBodyRow>
                             <TableBodyCell>{mail.id}</TableBodyCell>
                             <TableBodyCell>{mail.sender}</TableBodyCell>
-                            <TableBodyCell>{mail.subject}</TableBodyCell>
+                            <TableBodyCell>
+                                <!-- 제목을 클릭 가능한 버튼으로 변경 -->
+                                <button
+                                    class="text-left hover:text-blue-600 dark:hover:text-blue-400"
+                                    on:click={() => fetchMailDetail(mail.id)}
+                                >
+                                    {mail.subject}
+                                </button>
+                            </TableBodyCell>
                             <TableBodyCell>{mail.status}</TableBodyCell>
                             <TableBodyCell>{new Date(mail.createdAt).toLocaleString()}</TableBodyCell>
                         </TableBodyRow>
@@ -334,7 +400,7 @@
 
     {:else}
         <!-- 빈 상태 표시 -->
-        <div class="rounded-lg border p-12 text-center shadow-sm text-gray-200">
+        <div class="rounded-lg border p-12 text-center shadow-sm text-gray-200 dark:text-gray-700">
             <svg
                     class="mx-auto h-16 w-16 text-black dark:text-white"
                     fill="none"
@@ -352,3 +418,62 @@
         </div>
     {/if}
 </div>
+
+<!-- 모달 컴포넌트 추가 -->
+<Modal
+    bind:open={showModal}
+    size="xl"
+    autoclose
+    class="w-full"
+>
+    {#if selectedMail}
+        <div class="p-4">
+            <h2 class="mb-4 text-2xl font-bold">메일 상세 정보</h2>
+            
+            <div class="grid gap-4">
+                <div class="grid grid-cols-3 gap-4 border-b pb-2">
+                    <div class="font-semibold">ID</div>
+                    <div class="col-span-2">{selectedMail.id}</div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-4 border-b pb-2">
+                    <div class="font-semibold">제목</div>
+                    <div class="col-span-2">{selectedMail.subject}</div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-4 border-b pb-2">
+                    <div class="font-semibold">보낸 사람</div>
+                    <div class="col-span-2">{selectedMail.sender}</div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-4 border-b pb-2">
+                    <div class="font-semibold">받는 사람</div>
+                    <div class="col-span-2">{selectedMail.recipient}</div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-4 border-b pb-2">
+                    <div class="font-semibold">상태</div>
+                    <div class="col-span-2">{selectedMail.status}</div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-4 border-b pb-2">
+                    <div class="font-semibold">생성 시간</div>
+                    <div class="col-span-2">{new Date(selectedMail.createdAt).toLocaleString()}</div>
+                </div>
+                
+                {#if selectedMail.sentAt}
+                <div class="grid grid-cols-3 gap-4 border-b pb-2">
+                    <div class="font-semibold">전송 시간</div>
+                    <div class="col-span-2">{new Date(selectedMail.sentAt).toLocaleString()}</div>
+                </div>
+                {/if}
+            </div>
+            
+            <div class="mt-4 flex justify-end gap-2">
+                <Button color="alternative" onclick={() => showModal = false}>
+                    닫기
+                </Button>
+            </div>
+        </div>
+    {/if}
+</Modal>

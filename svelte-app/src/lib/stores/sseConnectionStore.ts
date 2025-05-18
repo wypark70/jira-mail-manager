@@ -24,7 +24,7 @@ function createSSEConnection() {
 
         try {
             // 단순히 EventSource만 생성
-            eventSource = new EventSource('/api/smtp/logs');
+            eventSource = new EventSource('/api/smtp-interceptor/logs');
         
             eventSource.onopen = () => {
                 store.update(state => ({

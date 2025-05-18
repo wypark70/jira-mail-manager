@@ -4,7 +4,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import com.samsungds.ims.mail.service.EmailQueueProcessLogService;
+import com.samsungds.ims.mail.service.EmailQueueBatchLogService;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
@@ -13,10 +13,10 @@ import java.util.Iterator;
 
 @Configuration
 public class LogConfig {
-    private final EmailQueueProcessLogService emailQueueProcessLogService;
+    private final EmailQueueBatchLogService emailQueueBatchLogService;
 
-    public LogConfig(EmailQueueProcessLogService emailQueueProcessLogService) {
-        this.emailQueueProcessLogService = emailQueueProcessLogService;
+    public LogConfig(EmailQueueBatchLogService emailQueueBatchLogService) {
+        this.emailQueueBatchLogService = emailQueueBatchLogService;
     }
 
     @PostConstruct
@@ -28,7 +28,7 @@ public class LogConfig {
         while(appenderIterator.hasNext()) {
             Appender<ILoggingEvent> appender = appenderIterator.next();
             if (appender instanceof LogServiceAppender) {
-                ((LogServiceAppender) appender).setLogService(emailQueueProcessLogService);
+                ((LogServiceAppender) appender).setLogService(emailQueueBatchLogService);
             }
         }
     }

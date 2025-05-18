@@ -2,8 +2,9 @@
     import {onMount} from 'svelte';
     import ConfirmModal from './ConfirmModal.svelte';
     import {Button, Card} from 'flowbite-svelte';
+    import {alertService} from "$lib/alerts";
 
-    const SMTP_API = '/api/smtp';
+    const SMTP_API = '/api/smtp-interceptor';
 
     // 상태 관리
     let serverStatus = $state({running: false, status: '확인 중...'});
@@ -25,6 +26,7 @@
                 method: 'POST'
             });
             const message = await response.text();
+            alertService.success(message);
             await loadServerStatus();
         } catch (error) {
             console.error('서버 시작 중 오류:', error);
@@ -37,6 +39,7 @@
                 method: 'POST'
             });
             const message = await response.text();
+            alertService.success(message);
             await loadServerStatus();
         } catch (error) {
             console.error('서버 중지 중 오류:', error);

@@ -1,10 +1,8 @@
 package com.samsungds.ims.mail.controller;
 
 import com.samsungds.ims.mail.dto.EmailQueueStats;
-import com.samsungds.ims.mail.dto.ProcessorStatus;
 import com.samsungds.ims.mail.model.EmailQueue;
 import com.samsungds.ims.mail.repository.EmailQueueRepository;
-import com.samsungds.ims.mail.service.EmailQueueProcessorService;
 import com.samsungds.ims.mail.service.EmailQueueTransactionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +16,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,9 +30,8 @@ import java.util.concurrent.*;
 @RequiredArgsConstructor
 @Slf4j
 public class EmailQueueController {
-
     private final EmailQueueRepository emailQueueRepository;
-    private final EmailQueueProcessorService emailQueueProcessorService;
+
     private final EmailQueueTransactionService emailQueueTransactionService;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
@@ -123,15 +122,15 @@ public class EmailQueueController {
     @GetMapping(path = "/stats/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamStats() {
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
-        
+
         // 연결 해제 시 리소스 정리를 위한 콜백 등록
         emitter.onCompletion(executorService::shutdown);
-        
+
         emitter.onTimeout(executorService::shutdown);
-        
+
         // 별도의 스레드 풀 사용
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        
+
         // 주기적인 통계 업데이트 작업 예약
         ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(() -> {
             try {
@@ -142,13 +141,13 @@ public class EmailQueueController {
                 scheduler.shutdown();
             }
         }, 0, 5, TimeUnit.SECONDS);
-        
+
         // 연결 종료 시 스케줄러 정리
         emitter.onCompletion(() -> {
             future.cancel(true);
             scheduler.shutdown();
         });
-        
+
         return emitter;
     }
 
@@ -202,147 +201,42 @@ public class EmailQueueController {
     }
 
     /**
-     * 처리 중인 이메일 모니터링
+     * 실패한 전체 이메일 재시도 큐에 추가
      */
-    @GetMapping("/processing")
-    public ResponseEntity<List<EmailQueue>> getProcessingEmails() {
-        List<EmailQueue> emailQueueList = emailQueueRepository.findByStatus(EmailQueue.EmailStatus.PROCESSING);
-        return ResponseEntity.ok(emailQueueList);
-    }
+    @PostMapping("/retry")
+    public ResponseEntity<Map<String, Object>> retryFailedEmail() {
+        List<EmailQueue> emailQueueList = emailQueueRepository.findByStatus(EmailQueue.EmailStatus.FAILED);
 
+        if (emailQueueList.isEmpty()) {
+            Map<String, Object> failResponse = new HashMap<>();
+            failResponse.put("success", false);
+            failResponse.put("message", "실패한 이메일이 없습니다.");
+            return ResponseEntity.ok(failResponse);
+        }
+
+        emailQueueList.forEach(emailQueue -> {
+            emailQueue.setStatus(EmailQueue.EmailStatus.QUEUED);
+            emailQueue.setRetryCount(0);
+            emailQueue.setErrorMessage(null);
+            emailQueue.setUpdatedAt(LocalDateTime.now());
+            emailQueueRepository.save(emailQueue);
+        });
+
+        // 재시도 설정
+        Map<String, Object> successResponse = new HashMap<>();
+        successResponse.put("success", true);
+        successResponse.put("message", "이메일 재시도가 큐에 추가되었습니다.");
+
+        return ResponseEntity.ok(successResponse);
+    }
+    
     /**
      * 이메일 상세 정보 조회
      */
     @GetMapping("/{id}")
     public ResponseEntity<EmailQueue> getEmailDetails(@PathVariable Long id) {
         Optional<EmailQueue> emailQueue = emailQueueRepository.findById(id);
-        return emailQueue.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    /**
-     * 이메일 큐 수동 처리 (관리자용)
-     */
-    @PostMapping("/process")
-    public ResponseEntity<Map<String, Object>> processEmailQueue() {
-        try {
-            emailQueueProcessorService.processEmailQueue();
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "이메일 큐 처리가 시작되었습니다.");
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("이메일 큐 수동 처리 중 오류 발생", e);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "처리 중 오류가 발생했습니다: " + e.getMessage());
-
-            return ResponseEntity.internalServerError().body(response);
-        }
-    }
-
-    /**
-     * 배치 프로세서 시작
-     */
-    @PostMapping("/processor/start")
-    public ResponseEntity<Map<String, Object>> startProcessor() {
-        Map<String, Object> response = new HashMap<>();
-        
-        if (emailQueueProcessorService.isRunning()) {
-            response.put("success", false);
-            response.put("message", "배치 프로세서가 이미 실행 중입니다.");
-            return ResponseEntity.badRequest().body(response);
-        }
-
-        try {
-            emailQueueProcessorService.start();
-            ProcessorStatus status = emailQueueProcessorService.getProcessorStatus();
-            
-            response.put("success", true);
-            response.put("message", "배치 프로세서가 시작되었습니다.");
-            response.put("processorId", status.getProcessorId());
-            response.put("startedAt", status.getStartedAt());
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "배치 프로세서 시작 중 오류 발생: " + e.getMessage());
-            return ResponseEntity.internalServerError().body(response);
-        }
-    }
-
-    /**
-     * 배치 프로세서 종료
-     */
-    @PostMapping("/processor/stop")
-    public ResponseEntity<Map<String, Object>> stopProcessor() {
-        Map<String, Object> response = new HashMap<>();
-        
-        if (!emailQueueProcessorService.isRunning()) {
-            response.put("success", false);
-            response.put("message", "배치 프로세서가 이미 중지된 상태입니다.");
-            return ResponseEntity.badRequest().body(response);
-        }
-
-        try {
-            emailQueueProcessorService.stop();
-            
-            response.put("success", true);
-            response.put("message", "배치 프로세서가 중지되었습니다.");
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "배치 프로세서 중지 중 오류 발생: " + e.getMessage());
-            return ResponseEntity.internalServerError().body(response);
-        }
-    }
-
-    /**
-     * 배치 프로세서 상태 조회
-     */
-    @GetMapping("/processor/status")
-    public ResponseEntity<ProcessorStatus> getProcessorStatus() {
-        ProcessorStatus status = emailQueueProcessorService.getProcessorStatus();
-        return ResponseEntity.ok(status);
-    }
-
-    /**
-     * 특정 날짜 범위의 이메일 조회
-     */
-    @GetMapping("/range")
-    public ResponseEntity<List<EmailQueue>> getEmailsByDateRange(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
-
-        List<EmailQueue> emails = emailQueueRepository.findByCreatedAtBetween(start, end);
-        return ResponseEntity.ok(emails);
-    }
-
-    /**
-     * 이메일 성공률 통계
-     */
-    @GetMapping("/success-rate")
-    public ResponseEntity<Map<String, Object>> getEmailSuccessRateStatistics(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
-
-        long sentCount = emailQueueRepository.countSentEmailsBetween(start, end);
-        long totalCount = emailQueueRepository.countTotalEmailsBetween(start, end);
-
-        double successRate = totalCount > 0 ? (double) sentCount / totalCount * 100 : 0;
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("startDate", start);
-        result.put("endDate", end);
-        result.put("sentCount", sentCount);
-        result.put("totalCount", totalCount);
-        result.put("successRate", successRate);
-
-        return ResponseEntity.ok(result);
+        return emailQueue.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     /**
@@ -350,24 +244,33 @@ public class EmailQueueController {
      */
     @GetMapping("/search")
     public ResponseEntity<Page<EmailQueue>> searchEmails(
-        @RequestParam(required = false) String status,
-        @RequestParam(required = false) String subject,
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size,
-        @RequestParam(defaultValue = "createdAt") String sort,
-        @RequestParam(defaultValue = "desc") String direction
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String subject,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sort,
+            @RequestParam(defaultValue = "desc") String direction
     ) {
         try {
-            EmailQueue.EmailStatus emailStatus = status != null && !status.isEmpty() ? 
-                EmailQueue.EmailStatus.valueOf(status.toUpperCase()) : null;
+            EmailQueue.EmailStatus emailStatus = status != null && !status.isEmpty() ? EmailQueue.EmailStatus.valueOf(status.toUpperCase()) : null;
 
             Sort.Direction sortDirection = Sort.Direction.fromString(direction);
             Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
 
+            // startDate가 있으면 시작시간을 해당 날짜의 00:00:00으로 설정
+            LocalDateTime start = startDate != null ? startDate.atStartOfDay() : null;
+
+            // endDate가 있으면 종료시간을 해당 날짜의 23:59:59로 설정
+            LocalDateTime end = endDate != null ? endDate.atTime(LocalTime.MAX) : null;
+
             Page<EmailQueue> emails = emailQueueRepository.findByStatusAndSubject(
-                emailStatus,
-                subject,
-                pageable
+                    emailStatus,
+                    subject,
+                    start,
+                    end,
+                    pageable
             );
 
             return ResponseEntity.ok(emails);

@@ -1,7 +1,7 @@
 package com.samsungds.ims.mail.controller;
 
 import com.samsungds.ims.mail.dto.LogMessage;
-import com.samsungds.ims.mail.service.EmailQueueProcessLogService;
+import com.samsungds.ims.mail.service.EmailQueueBatchLogService;
 import com.samsungds.ims.mail.service.SmtpInterceptorServerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -14,16 +14,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/smtp")
+@RequestMapping("/api/smtp-interceptor")
 @Slf4j
 public class SmtpInterceptorController {
 
     private final SmtpInterceptorServerService smtpInterceptorServerService;
-    private final EmailQueueProcessLogService emailQueueProcessLogService;
+    private final EmailQueueBatchLogService emailQueueBatchLogService;
 
-    public SmtpInterceptorController(SmtpInterceptorServerService smtpInterceptorServerService, EmailQueueProcessLogService emailQueueProcessLogService) {
+    public SmtpInterceptorController(SmtpInterceptorServerService smtpInterceptorServerService, EmailQueueBatchLogService emailQueueBatchLogService) {
         this.smtpInterceptorServerService = smtpInterceptorServerService;
-        this.emailQueueProcessLogService = emailQueueProcessLogService;
+        this.emailQueueBatchLogService = emailQueueBatchLogService;
     }
 
     @GetMapping(path = "/logs", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -42,7 +42,7 @@ public class SmtpInterceptorController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CACHE_CONTROL, "no-cache")
                 .header(HttpHeaders.CONNECTION, "keep-alive")
-                .body(emailQueueProcessLogService.getLogStream()
+                .body(emailQueueBatchLogService.getLogStream()
                         .doOnComplete(() -> log.info("로그 스트림 완료"))
                         .doOnError(e -> log.error("로그 스트림 에러", e))
                 );

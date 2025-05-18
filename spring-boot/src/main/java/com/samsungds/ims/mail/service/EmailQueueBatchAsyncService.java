@@ -9,7 +9,7 @@ import java.util.concurrent.CompletableFuture;
 
 @Service
 @Slf4j
-public class EmailQueueAsyncProcessorService {
+public class EmailQueueBatchAsyncService {
 
     /**
      * 이메일 비동기 처리
