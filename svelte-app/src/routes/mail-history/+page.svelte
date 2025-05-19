@@ -12,6 +12,7 @@
         TableHead,
         TableHeadCell, Select
     } from "flowbite-svelte";
+    import JsonViewer from "$lib/components/JsonViewer.svelte";
     
     const springApiBaseUrl = 'http://localhost:8080/api';
 
@@ -184,6 +185,7 @@
                     bind:value={searchFilters.subject}
                     placeholder="제목으로 검색..."
                     type="text"
+                    onchange={applyFilters}
                 />
             </div>
 
@@ -195,6 +197,7 @@
                     class="w-full"
                     bind:value={searchFilters.startDate}
                     placeholder="발송일 시작 선택"
+                    onselect={applyFilters}
                 />
             </div>
 
@@ -206,6 +209,7 @@
                     class="w-full"
                     bind:value={searchFilters.endDate}
                     placeholder="발송일 종료 선택"
+                    onselect={applyFilters}
                 />
             </div>
 
@@ -228,7 +232,7 @@
         <Card size="xl">
             <Table>
                 <TableHead class="dark:text-white">
-                    {#each ['id', 'sender', 'subject', 'sentAt'] as column}
+                    {#each ['ID', '제목', '발신자', '발신일'] as column}
                         <TableHeadCell onclick={() => changeSort(column)}>
                             <div class="flex cursor-pointer items-center gap-2 hover:text-blue-600">
                                 {column}
@@ -247,7 +251,6 @@
                     {#each mailHistoryPage.content as mail}
                         <TableBodyRow>
                             <TableBodyCell>{mail.id}</TableBodyCell>
-                            <TableBodyCell>{mail.sender}</TableBodyCell>
                             <TableBodyCell>
                                 <button
                                     class="text-left hover:text-blue-600 dark:hover:text-blue-400"
@@ -256,6 +259,7 @@
                                     {mail.subject}
                                 </button>
                             </TableBodyCell>
+                            <TableBodyCell>{mail.sender}</TableBodyCell>
                             <TableBodyCell>{new Date(mail.sentAt).toLocaleString()}</TableBodyCell>
                         </TableBodyRow>
                     {/each}
@@ -431,7 +435,9 @@
                 </div>
                 {/if}
             </div>
-            
+
+            <JsonViewer json={selectedMail} />
+
             <div class="mt-4 flex justify-end gap-2">
                 <Button color="alternative" onclick={() => showModal = false}>
                     닫기

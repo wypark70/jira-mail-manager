@@ -8,7 +8,10 @@ const config = {
 			fallback: 'index.html',
 			pages: 'build',
 			assets: 'build'
-		})
+		}),
+		alias: {
+			$lib: './src/lib'
+		}
 	}
 };
 
