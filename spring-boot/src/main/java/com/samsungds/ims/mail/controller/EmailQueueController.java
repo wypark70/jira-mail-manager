@@ -5,6 +5,7 @@ import com.samsungds.ims.mail.model.EmailQueue;
 import com.samsungds.ims.mail.repository.EmailQueueRepository;
 import com.samsungds.ims.mail.service.EmailHistoryService;
 import com.samsungds.ims.mail.service.EmailQueueService;
+import com.samsungds.ims.mail.service.EmailQueueStreamService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -33,10 +34,9 @@ import java.util.concurrent.*;
 @Slf4j
 public class EmailQueueController {
     private final EmailQueueRepository emailQueueRepository;
-
     private final EmailHistoryService emailHistoryService;
     private final EmailQueueService emailQueueService;
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private final EmailQueueStreamService emailQueueStreamService;
 
     /**
      * 이메일 큐에 새 이메일 추가
@@ -124,34 +124,7 @@ public class EmailQueueController {
      */
     @GetMapping(path = "/stats/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamStats() {
-        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
-
-        // 연결 해제 시 리소스 정리를 위한 콜백 등록
-        emitter.onCompletion(executorService::shutdown);
-
-        emitter.onTimeout(executorService::shutdown);
-
-        // 별도의 스레드 풀 사용
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-
-        // 주기적인 통계 업데이트 작업 예약
-        ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(() -> {
-            try {
-                EmailQueueStats stats = emailQueueService.getQueueStats();
-                emitter.send(stats);
-            } catch (Exception e) {
-                emitter.completeWithError(e);
-                scheduler.shutdown();
-            }
-        }, 0, 5, TimeUnit.SECONDS);
-
-        // 연결 종료 시 스케줄러 정리
-        emitter.onCompletion(() -> {
-            future.cancel(true);
-            scheduler.shutdown();
-        });
-
-        return emitter;
+        return emailQueueStreamService.streamStats();
     }
 
     /**

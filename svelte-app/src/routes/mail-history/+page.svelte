@@ -1,19 +1,19 @@
 <script lang="ts">
     import {
-        Datepicker,
-        Modal,
         Button,
-        Card,
+        Datepicker,
         Input,
+        Modal,
+        Select,
         Table,
         TableBody,
         TableBodyCell,
         TableBodyRow,
         TableHead,
-        TableHeadCell, Select
+        TableHeadCell
     } from "flowbite-svelte";
     import JsonViewer from "$lib/components/JsonViewer.svelte";
-    
+
     const springApiBaseUrl = 'http://localhost:8080/api';
 
     interface PageResponse<T> {
@@ -178,38 +178,38 @@
         <div class="flex flex-wrap items-end gap-4">
             <!-- 제목 검색 -->
             <div class="flex-1 min-w-[200px]">
-                <label for="subject" class="mb-2 block text-sm font-medium">제목</label>
+                <label class="mb-2 block text-sm font-medium" for="subject">제목</label>
                 <Input
-                    id="subject"
-                    class="w-full"
-                    bind:value={searchFilters.subject}
-                    placeholder="제목으로 검색..."
-                    type="text"
-                    onchange={applyFilters}
+                        bind:value={searchFilters.subject}
+                        class="w-full"
+                        id="subject"
+                        onchange={applyFilters}
+                        placeholder="제목으로 검색..."
+                        type="text"
                 />
             </div>
 
             <!-- 발송일 시작 -->
             <div class="flex-1 min-w-[200px]">
-                <label for="startDate" class="mb-2 block text-sm font-medium">발송일 시작</label>
+                <label class="mb-2 block text-sm font-medium" for="startDate">발송일 시작</label>
                 <Datepicker
-                    id="startDate"
-                    class="w-full"
-                    bind:value={searchFilters.startDate}
-                    placeholder="발송일 시작 선택"
-                    onselect={applyFilters}
+                        bind:value={searchFilters.startDate}
+                        class="w-full"
+                        id="startDate"
+                        onselect={applyFilters}
+                        placeholder="발송일 시작 선택"
                 />
             </div>
 
             <!-- 발송일 종료 -->
             <div class="flex-1 min-w-[200px]">
-                <label for="endDate" class="mb-2 block text-sm font-medium">발송일 종료</label>
+                <label class="mb-2 block text-sm font-medium" for="endDate">발송일 종료</label>
                 <Datepicker
-                    id="endDate"
-                    class="w-full"
-                    bind:value={searchFilters.endDate}
-                    placeholder="발송일 종료 선택"
-                    onselect={applyFilters}
+                        bind:value={searchFilters.endDate}
+                        class="w-full"
+                        id="endDate"
+                        onselect={applyFilters}
+                        placeholder="발송일 종료 선택"
                 />
             </div>
 
@@ -217,7 +217,8 @@
             <div class="flex gap-2">
                 <Button color="primary" onclick={applyFilters}>
                     <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                        <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round"
+                              stroke-linejoin="round" stroke-width="2"/>
                     </svg>
                     검색
                 </Button>
@@ -229,43 +230,41 @@
     </div>
 
     {#if mailHistoryPage.content.length > 0}
-        <Card size="xl">
-            <Table>
-                <TableHead class="dark:text-white">
-                    {#each ['ID', '제목', '발신자', '발신일'] as column}
-                        <TableHeadCell onclick={() => changeSort(column)}>
-                            <div class="flex cursor-pointer items-center gap-2 hover:text-blue-600">
-                                {column}
-                                {#if pagination.sortBy === column}
-                                    <svg class="h-4 w-4 transition-transform {pagination.sortDirection === 'desc' ? 'rotate-180' : ''}"
-                                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M5 15l7-7 7 7"/>
-                                    </svg>
-                                {/if}
-                            </div>
-                        </TableHeadCell>
-                    {/each}
-                </TableHead>
-                <TableBody class="dark:text-white">
-                    {#each mailHistoryPage.content as mail}
-                        <TableBodyRow>
-                            <TableBodyCell>{mail.id}</TableBodyCell>
-                            <TableBodyCell>
-                                <button
+        <Table shadow hoverable={true} class="rounded-lg overflow-hidden">
+            <TableHead class="dark:text-white rounded-xl border-b border-black/20">
+                {#each ['ID', '제목', '발신자', '발신일'] as column}
+                    <TableHeadCell onclick={() => changeSort(column)}>
+                        <div class="flex cursor-pointer items-center gap-2 hover:text-blue-600">
+                            {column}
+                            {#if pagination.sortBy === column}
+                                <svg class="h-4 w-4 transition-transform {pagination.sortDirection === 'desc' ? 'rotate-180' : ''}"
+                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M5 15l7-7 7 7"/>
+                                </svg>
+                            {/if}
+                        </div>
+                    </TableHeadCell>
+                {/each}
+            </TableHead>
+            <TableBody class="dark:text-white">
+                {#each mailHistoryPage.content as mail}
+                    <TableBodyRow class="border-black/20">
+                        <TableBodyCell>{mail.id}</TableBodyCell>
+                        <TableBodyCell>
+                            <button
                                     class="text-left hover:text-blue-600 dark:hover:text-blue-400"
                                     on:click={() => fetchMailDetail(mail.id)}
-                                >
-                                    {mail.subject}
-                                </button>
-                            </TableBodyCell>
-                            <TableBodyCell>{mail.sender}</TableBodyCell>
-                            <TableBodyCell>{new Date(mail.sentAt).toLocaleString()}</TableBodyCell>
-                        </TableBodyRow>
-                    {/each}
-                </TableBody>
-            </Table>
-        </Card>
+                            >
+                                {mail.subject}
+                            </button>
+                        </TableBodyCell>
+                        <TableBodyCell>{mail.sender}</TableBodyCell>
+                        <TableBodyCell>{new Date(mail.sentAt).toLocaleString()}</TableBodyCell>
+                    </TableBodyRow>
+                {/each}
+            </TableBody>
+        </Table>
         <!-- 페이지네이션 섹션 -->
         <div class="mt-6 flex flex-col items-center justify-between gap-4 sm:flex-row dark:text-white">
             <p class="text-sm">
@@ -360,16 +359,16 @@
     {:else}
         <div class="rounded-lg border p-12 text-center shadow-sm text-gray-200 dark:text-gray-700">
             <svg
-                class="mx-auto h-16 w-16 text-black dark:text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+                    class="mx-auto h-16 w-16 text-black dark:text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
             >
                 <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.5"
-                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="1.5"
+                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                 />
             </svg>
             <h3 class="mt-4 text-lg font-medium text-black dark:text-white">조건에 맞는 메일 히스토리가 없습니다.</h3>
@@ -378,31 +377,26 @@
 </div>
 
 <Modal
-    bind:open={showModal}
-    size="xl"
-    autoclose
-    class="w-full"
+        autoclose
+        bind:open={showModal}
+        class="w-full"
+        size="xl"
 >
     {#if selectedMail}
         <div class="p-4">
             <h2 class="mb-4 text-2xl font-bold">메일 히스토리 상세 정보</h2>
-            
+
             <div class="grid gap-4">
                 <div class="grid grid-cols-3 gap-4 border-b pb-2">
                     <div class="font-semibold">ID</div>
                     <div class="col-span-2">{selectedMail.id}</div>
                 </div>
-                
-                <div class="grid grid-cols-3 gap-4 border-b pb-2">
-                    <div class="font-semibold">원본 이메일 ID</div>
-                    <div class="col-span-2">{selectedMail.originalEmailId}</div>
-                </div>
-                
+
                 <div class="grid grid-cols-3 gap-4 border-b pb-2">
                     <div class="font-semibold">제목</div>
                     <div class="col-span-2">{selectedMail.subject}</div>
                 </div>
-                
+
                 <div class="grid grid-cols-3 gap-4 border-b pb-2">
                     <div class="font-semibold">보낸 사람</div>
                     <div class="col-span-2">{selectedMail.sender}</div>
@@ -412,31 +406,26 @@
                     <div class="font-semibold">처리자 ID</div>
                     <div class="col-span-2">{selectedMail.processorId}</div>
                 </div>
-                
+
                 <div class="grid grid-cols-3 gap-4 border-b pb-2">
                     <div class="font-semibold">재시도 횟수</div>
                     <div class="col-span-2">{selectedMail.retryCount}</div>
                 </div>
-                
-                <div class="grid grid-cols-3 gap-4 border-b pb-2">
-                    <div class="font-semibold">생성 시간</div>
-                    <div class="col-span-2">{new Date(selectedMail.createdAt).toLocaleString()}</div>
-                </div>
-                
+
                 <div class="grid grid-cols-3 gap-4 border-b pb-2">
                     <div class="font-semibold">발송 시간</div>
                     <div class="col-span-2">{new Date(selectedMail.sentAt).toLocaleString()}</div>
                 </div>
 
                 {#if selectedMail.errorMessage}
-                <div class="grid grid-cols-3 gap-4 border-b pb-2">
-                    <div class="font-semibold">오류 메시지</div>
-                    <div class="col-span-2 text-red-600">{selectedMail.errorMessage}</div>
-                </div>
+                    <div class="grid grid-cols-3 gap-4 border-b pb-2">
+                        <div class="font-semibold">오류 메시지</div>
+                        <div class="col-span-2 text-red-600">{selectedMail.errorMessage}</div>
+                    </div>
                 {/if}
             </div>
 
-            <JsonViewer json={selectedMail} />
+            <JsonViewer json={selectedMail}/>
 
             <div class="mt-4 flex justify-end gap-2">
                 <Button color="alternative" onclick={() => showModal = false}>

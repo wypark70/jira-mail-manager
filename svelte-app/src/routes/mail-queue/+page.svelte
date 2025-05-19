@@ -1,7 +1,6 @@
 <script lang="ts">
     import {
         Button,
-        Card,
         Datepicker,
         Input,
         Modal,
@@ -220,9 +219,9 @@
                         bind:value={searchFilters.subject}
                         class="w-full"
                         id="subject"
+                        onchange={applyFilters}
                         placeholder="제목으로 검색..."
                         type="text"
-                        onchange={applyFilters}
                 />
             </div>
 
@@ -233,8 +232,8 @@
                         bind:value={searchFilters.startDate}
                         class="w-full"
                         id="startDate"
-                        placeholder="생성일 시작 선택"
                         onselect={applyFilters}
+                        placeholder="생성일 시작 선택"
                 />
             </div>
 
@@ -245,8 +244,8 @@
                         bind:value={searchFilters.endDate}
                         class="w-full"
                         id="endDate"
-                        placeholder="생성일 종료 선택"
                         onselect={applyFilters}
+                        placeholder="생성일 종료 선택"
                 />
             </div>
 
@@ -268,52 +267,50 @@
 
     {#if mailQueuePage.content.length > 0}
         <!-- 테이블 섹션 -->
-        <Card size="xl">
-            <Table>
-                <TableHead class="dark:text-white">
-                    {#each ['ID', '제목', '발신자', '상태', '생성일'] as column}
-                        <TableHeadCell onclick={() => changeSort(column)}>
-                            <div class="flex cursor-pointer items-center gap-2 hover:text-blue-600">
-                                {column}
-                                {#if pagination.sortBy === column}
-                                    <svg class="h-4 w-4 transition-transform {pagination.sortDirection === 'desc' ? 'rotate-180' : ''}"
-                                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M5 15l7-7 7 7"/>
-                                    </svg>
-                                {:else}
-                                    <svg class="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100"
-                                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M5 15l7-7 7 7"/>
-                                    </svg>
-                                {/if}
-                            </div>
-                        </TableHeadCell>
-                    {/each}
-                </TableHead>
-                <TableBody class="dark:text-white">
-                    {#each mailQueuePage.content as mail}
-                        <!-- 테이블 내용 부분 수정 -->
-                        <TableBodyRow>
-                            <TableBodyCell>{mail.id}</TableBodyCell>
-                            <TableBodyCell>
-                                <!-- 제목을 클릭 가능한 버튼으로 변경 -->
-                                <button
-                                        class="text-left hover:text-blue-600 dark:hover:text-blue-400"
-                                        on:click={() => fetchMailDetail(mail.id)}
-                                >
-                                    {mail.subject}
-                                </button>
-                            </TableBodyCell>
-                            <TableBodyCell>{mail.sender}</TableBodyCell>
-                            <TableBodyCell>{mail.status}</TableBodyCell>
-                            <TableBodyCell>{new Date(mail.createdAt).toLocaleString()}</TableBodyCell>
-                        </TableBodyRow>
-                    {/each}
-                </TableBody>
-            </Table>
-        </Card>
+        <Table shadow hoverable={true} class="rounded-lg overflow-hidden">
+            <TableHead class="dark:text-white border-b border-black/20">
+                {#each ['ID', '제목', '발신자', '상태', '생성일'] as column}
+                    <TableHeadCell onclick={() => changeSort(column)}>
+                        <div class="flex cursor-pointer items-center gap-2 hover:text-blue-600">
+                            {column}
+                            {#if pagination.sortBy === column}
+                                <svg class="h-4 w-4 transition-transform {pagination.sortDirection === 'desc' ? 'rotate-180' : ''}"
+                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M5 15l7-7 7 7"/>
+                                </svg>
+                            {:else}
+                                <svg class="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100"
+                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M5 15l7-7 7 7"/>
+                                </svg>
+                            {/if}
+                        </div>
+                    </TableHeadCell>
+                {/each}
+            </TableHead>
+            <TableBody class="dark:text-white">
+                {#each mailQueuePage.content as mail}
+                    <!-- 테이블 내용 부분 수정 -->
+                    <TableBodyRow class="border-black/20">
+                        <TableBodyCell>{mail.id}</TableBodyCell>
+                        <TableBodyCell>
+                            <!-- 제목을 클릭 가능한 버튼으로 변경 -->
+                            <button
+                                    class="text-left hover:text-blue-600 dark:hover:text-blue-400"
+                                    on:click={() => fetchMailDetail(mail.id)}
+                            >
+                                {mail.subject}
+                            </button>
+                        </TableBodyCell>
+                        <TableBodyCell>{mail.sender}</TableBodyCell>
+                        <TableBodyCell>{mail.status}</TableBodyCell>
+                        <TableBodyCell>{new Date(mail.createdAt).toLocaleString()}</TableBodyCell>
+                    </TableBodyRow>
+                {/each}
+            </TableBody>
+        </Table>
         <!-- 페이지네이션 섹션 -->
         <div class="mt-6 flex flex-col items-center justify-between gap-4 sm:flex-row dark:text-white">
             <p class="text-sm">
@@ -455,11 +452,6 @@
                 </div>
 
                 <div class="grid grid-cols-3 gap-4 border-b pb-2">
-                    <div class="font-semibold">받는 사람</div>
-                    <div class="col-span-2">{selectedMail.recipient}</div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-4 border-b pb-2">
                     <div class="font-semibold">상태</div>
                     <div class="col-span-2">{selectedMail.status}</div>
                 </div>
@@ -477,7 +469,7 @@
                 {/if}
             </div>
 
-            <JsonViewer json={selectedMail} />
+            <JsonViewer json={selectedMail}/>
 
             <div class="mt-4 flex justify-end gap-2">
                 <Button color="alternative" onclick={() => showModal = false}>

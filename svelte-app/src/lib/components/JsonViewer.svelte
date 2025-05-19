@@ -141,8 +141,4 @@
         background: #cbd5e1;
         border-radius: 4px;
     }
-
-    .dark .overflow-auto::-webkit-scrollbar-thumb {
-        background: #475569;
-    }
 </style>
