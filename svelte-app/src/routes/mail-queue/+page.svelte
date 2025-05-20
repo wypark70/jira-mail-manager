@@ -15,8 +15,7 @@
     import {page} from '$app/state';
     import JsonViewer from "$lib/components/JsonViewer.svelte";
 
-
-    const springApiBaseUrl = 'http://localhost:8080/api';
+    const springApiBaseUrl = import.meta.env.VITE_SPRING_API_BASE_URL;
 
     interface PageResponse<T> {
         content: T[];

@@ -7,7 +7,7 @@
     let currentPath = $state(page.url.pathname);
 
     const baseClass = 'px-3 py-2 rounded-lg transition-all duration-200';
-    const activeClass = `${baseClass} bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-bold`;
+    const activeClass = `${baseClass} bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 font-bold`;
     const inactiveClass = `${baseClass} text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800`;
 
     const menuItems = $state([
@@ -41,9 +41,7 @@
     <NavUl>
         {#each menuItems as {href, label, classNm}}
             <NavLi {href}>
-                <div class={classNm}>
-                    {label}
-                </div>
+                <div class={classNm}>{label}</div>
             </NavLi>
         {/each}
         <DarkMode/>

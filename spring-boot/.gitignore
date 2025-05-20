@@ -39,4 +39,5 @@ out/
 !/src/main/resources/static/js/
 
 
-/data/
+/data
+/logs

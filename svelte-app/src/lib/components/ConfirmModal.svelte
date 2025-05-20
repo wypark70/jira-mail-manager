@@ -24,7 +24,7 @@
     <p class="text-base leading-relaxed text-gray-500 dark:text-gray-400">{message}</p>
 
     {#snippet footer()}
-        <Button color="alternative" onclick={onCancel}>Decline</Button>
-        <Button onclick={onConfirm}>I accept</Button>
+        <Button color="alternative" onclick={onCancel}>취소</Button>
+        <Button onclick={onConfirm}>확인</Button>
     {/snippet}
 </Modal>

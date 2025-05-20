@@ -1,5 +1,5 @@
 <script context="module" lang="ts">
-	const springApiBaseUrl = import.meta.env.VITE_SPRING_API_BASE_URL || 'http://localhost:8080/api/data';
+	const springApiBaseUrl = import.meta.env.VITE_SPRING_API_BASE_URL;
 
 	// 이메일 상태 타입 정의
 	export type EmailStatus = 

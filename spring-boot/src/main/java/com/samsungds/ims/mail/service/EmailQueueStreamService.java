@@ -47,7 +47,7 @@ public class EmailQueueStreamService {
                 EmailQueueStats stats = emailQueueService.getQueueStats();
                 emitter.send(stats);
             } catch (Exception e) {
-                log.error("통계 전송 중 오류 발생", e);
+                log.info("통계 전송 중 오류 발생: {}", e.getMessage());
                 emitter.completeWithError(e);
                 activeEmitterIds.remove(emitterId);
             }

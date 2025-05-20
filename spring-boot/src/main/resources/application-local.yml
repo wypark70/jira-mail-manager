@@ -59,7 +59,7 @@ mail:
 logging:
   level:
     jdbc:
-      sqlonly: INFO
+      sqlonly: OFF
       sqltiming: OFF
       resultsettable: OFF
       audit: OFF

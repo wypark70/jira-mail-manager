@@ -1,10 +1,21 @@
 <script lang="ts">
     import { Card } from 'flowbite-svelte';
     import { alertService } from '$lib/alerts';
+    import ConfirmModal from './ConfirmModal.svelte';
+
+    const springApiBaseUrl = import.meta.env.VITE_SPRING_API_BASE_URL;
+
+    function processEmailQueueBatch() {
+        showConfirm(
+            '배치 실행',
+            '메일 보내는 배치 프로그램을 실행하시겠습니까?',
+            handleProcessEmailQueueBatch
+        );
+    }
 
     async function handleProcessEmailQueueBatch() {
         try {
-            const response = await fetch(`/api/email-queue-batch/process`, {
+            const response = await fetch(`${springApiBaseUrl}/email-queue-batch/process`, {
                 method: 'POST'
             });
             const { message } = await response.json();
@@ -14,9 +25,17 @@
         }
     }
 
+    function retryFailedEmail() {
+        showConfirm(
+            '재시도 상태로 변경',
+            '발송 실패한 메일을 재시도 상태로 변경하시겠습니까?',
+            handleRetryFailedEmail
+        );
+    }
+
     async function handleRetryFailedEmail() {
         try {
-            const response = await fetch(`/api/email-queue/retry`, {
+            const response = await fetch(`${springApiBaseUrl}/email-queue/retry`, {
                 method: 'POST'
             });
             const { message } = await response.json();
@@ -26,9 +45,17 @@
         }
     }
 
+    function moveSentToHistory() {
+        showConfirm(
+            '이력 테이블로 이동',
+            '발신 성공한 이메일을 이력 테이블로 이동처럼 처리하시겠습니까?',
+            handleMoveSentToHistory
+        );
+    }
+
     async function handleMoveSentToHistory() {
         try {
-            const response = await fetch(`/api/email-queue/move-to-history`, {
+            const response = await fetch(`${springApiBaseUrl}/email-queue/move-to-history`, {
                 method: 'POST'
             });
             const message = await response.text();
@@ -37,7 +64,33 @@
             console.error('실패한 이메일 재시도 오류:', error);
         }
     }
+
+    let showConfirmModal = $state(false);
+    let confirmTitle = $state('');
+    let confirmMessage = $state('');
+    let confirmCallback = $state<() => Promise<void>>();
+
+    function showConfirm(title: string, message: string, callback: () => Promise<void>) {
+        confirmTitle = title;
+        confirmMessage = message;
+        confirmCallback = callback;
+        showConfirmModal = true;
+    }
 </script>
+
+<ConfirmModal
+        message={confirmMessage}
+        onCancel={() => showConfirmModal = false}
+        onConfirm={async () => {
+        if (confirmCallback) {
+            await confirmCallback();
+        }
+        showConfirmModal = false;
+    }}
+        show={showConfirmModal}
+        title={confirmTitle}
+/>
+
 <div class="grid grid-cols-1 gap-6 md:grid-cols-2 dark:text-white">
     <Card
             class="rounded-lg p-6 shadow-md transition-shadow hover:shadow-lg"
@@ -50,7 +103,7 @@
 
     <Card
             class="rounded-lg p-6 shadow-md transition-shadow hover:shadow-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
-            onclick={handleProcessEmailQueueBatch}
+            onclick={processEmailQueueBatch}
             size="xl"
     >
         <h3 class="mb-2 text-lg font-semibold">배치 실행</h3>
@@ -59,7 +112,7 @@
 
     <Card
             class="rounded-lg p-6 shadow-md transition-shadow hover:shadow-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
-            onclick={handleRetryFailedEmail}
+            onclick={retryFailedEmail}
             size="xl"
     >
         <h3 class="mb-2 text-lg font-semibold">실패한 이메일 재시도</h3>
@@ -67,7 +120,7 @@
     </Card>
     <Card
             class="rounded-lg p-6 shadow-md transition-shadow hover:shadow-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
-            onclick={handleMoveSentToHistory}
+            onclick={moveSentToHistory}
             size="xl"
     >
         <h3 class="mb-2 text-lg font-semibold">발신한 이메일 이력 테이블로 이동</h3>
