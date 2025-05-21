@@ -118,6 +118,7 @@
         <h3 class="mb-2 text-lg font-semibold">실패한 이메일 재시도</h3>
         <p>발송 실패한 메일을 재시도 상태로 변경 합니다.</p>
     </Card>
+
     <Card
             class="rounded-lg p-6 shadow-md transition-shadow hover:shadow-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
             onclick={moveSentToHistory}

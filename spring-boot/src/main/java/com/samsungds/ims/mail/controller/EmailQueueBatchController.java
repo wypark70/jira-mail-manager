@@ -21,15 +21,15 @@ public class EmailQueueBatchController {
     private final EmailQueueBatchService emailQueueBatchService;
 
     /**
-     * 배치 프로세서 시작
+     * 매일 발송 배치 시작
      */
-    @PostMapping("/processor/start")
+    @PostMapping("/start")
     public ResponseEntity<Map<String, Object>> startProcessor() {
         Map<String, Object> response = new HashMap<>();
 
         if (emailQueueBatchService.isRunning()) {
             response.put("success", false);
-            response.put("message", "배치 프로세서가 이미 실행 중입니다.");
+            response.put("message", "매일 발송 배치가 이미 실행 중입니다.");
             return ResponseEntity.badRequest().body(response);
         }
 
@@ -38,28 +38,28 @@ public class EmailQueueBatchController {
             ProcessorStatus status = emailQueueBatchService.getProcessorStatus();
 
             response.put("success", true);
-            response.put("message", "배치 프로세서가 시작되었습니다.");
+            response.put("message", "매일 발송 배치가 시작되었습니다.");
             response.put("processorId", status.getProcessorId());
             response.put("startedAt", status.getStartedAt());
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             response.put("success", false);
-            response.put("message", "배치 프로세서 시작 중 오류 발생: " + e.getMessage());
+            response.put("message", "매일 발송 배치 시작 중 오류 발생: " + e.getMessage());
             return ResponseEntity.internalServerError().body(response);
         }
     }
 
     /**
-     * 배치 프로세서 종료
+     * 매일 발송 배치 종료
      */
-    @PostMapping("/processor/stop")
+    @PostMapping("/stop")
     public ResponseEntity<Map<String, Object>> stopProcessor() {
         Map<String, Object> response = new HashMap<>();
 
         if (!emailQueueBatchService.isRunning()) {
             response.put("success", false);
-            response.put("message", "배치 프로세서가 이미 중지된 상태입니다.");
+            response.put("message", "매일 발송 배치가 이미 중지된 상태입니다.");
             return ResponseEntity.badRequest().body(response);
         }
 
@@ -67,20 +67,20 @@ public class EmailQueueBatchController {
             emailQueueBatchService.stop();
 
             response.put("success", true);
-            response.put("message", "배치 프로세서가 중지되었습니다.");
+            response.put("message", "매일 발송 배치가 중지되었습니다.");
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             response.put("success", false);
-            response.put("message", "배치 프로세서 중지 중 오류 발생: " + e.getMessage());
+            response.put("message", "매일 발송 배치 중지 중 오류 발생: " + e.getMessage());
             return ResponseEntity.internalServerError().body(response);
         }
     }
 
     /**
-     * 배치 프로세서 상태 조회
+     * 매일 발송 배치 상태 조회
      */
-    @GetMapping("/processor/status")
+    @GetMapping("/status")
     public ResponseEntity<ProcessorStatus> getProcessorStatus() {
         ProcessorStatus status = emailQueueBatchService.getProcessorStatus();
         return ResponseEntity.ok(status);
@@ -96,15 +96,15 @@ public class EmailQueueBatchController {
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("message", "이메일 큐 처리가 시작되었습니다.");
+            response.put("message", "매일 발송 배치 처리가 시작되었습니다.");
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("이메일 큐 수동 처리 중 오류 발생", e);
+            log.error("매일 발송 배치 수동 처리 중 오류 발생", e);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
-            response.put("message", "처리 중 오류가 발생했습니다: " + e.getMessage());
+            response.put("message", "매일 발송 배치 처리 중 오류가 발생했습니다: " + e.getMessage());
 
             return ResponseEntity.internalServerError().body(response);
         }

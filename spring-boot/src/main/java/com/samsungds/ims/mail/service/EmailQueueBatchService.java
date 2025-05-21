@@ -78,7 +78,7 @@ public class EmailQueueBatchService implements SmartLifecycle {
     /**
      * 대기 중인 이메일 처리 (20초마다 실행)
      */
-    @Scheduled(cron = "0/20 * * * * *")
+    @Scheduled(cron = "*/20 * * * * *")
     public void processEmailQueue() {
         if (!running) {
             log.debug("이메일 큐 프로세서가 실행 중이 아닙니다.");

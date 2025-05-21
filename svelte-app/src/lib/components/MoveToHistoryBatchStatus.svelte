@@ -4,7 +4,7 @@
     import {Button, Card} from 'flowbite-svelte';
     import {alertService} from "$lib/alerts";
 
-    const PROCESSOR_API = '/api/email-queue-batch/processor';
+    const PROCESSOR_API = '/api/move-to-history-batch';
 
     // 상태 관리
     let processorStatus = $state({
@@ -38,7 +38,7 @@
                 alertService.error(result.message);
             }
         } catch (error) {
-            console.error('프로세서 시작 중 오류:', error);
+            console.error('히스토리 테이블 이동 배치 시작 중 오류:', error);
         }
     }
 
@@ -55,22 +55,22 @@
                 alertService.error(result.message);
             }
         } catch (error) {
-            console.error('프로세서 중지 중 오류:', error);
+            console.error('히스토리 테이블 이동 배치 중지 중 오류:', error);
         }
     }
 
     function startProcessor() {
         showConfirm(
-            '프로세서 시작',
-            '이메일 배치 프로세서를 시작하시겠습니까?',
+            '히스토리 테이블 이동 배치 시작',
+            '히스토리 테이블 이동 배치를 시작하시겠습니까?',
             handleStartProcessor
         );
     }
 
     function stopProcessor() {
         showConfirm(
-            '프로세서 중지',
-            '이메일 배치 프로세서를 중지하시겠습니까?',
+            '히스토리 테이블 이동 배치 중지',
+            '히스토리 테이블 이동 배치를 중지하시겠습니까?',
             handleStopProcessor
         );
     }
@@ -80,7 +80,7 @@
             const response = await fetch(`${PROCESSOR_API}/status`);
             processorStatus = await response.json();
         } catch (error) {
-            console.error('프로세서 상태를 불러오는 중 오류 발생:', error);
+            console.error('히스토리 테이블 이동 배치 상태를 불러오는 중 오류 발생:', error);
         }
     }
 
@@ -109,7 +109,7 @@
 
 <Card class="rounded-lg p-6 shadow-lg dark:text-white" size="xl">
     <div class="mb-4 flex items-center justify-between">
-        <h3 class="text-lg font-semibold">이메일 배치 프로세서</h3>
+        <h3 class="text-lg font-semibold">히스토리 테이블 이동 배치</h3>
     </div>
 
     <div class="mt-6 flex items-center justify-between">
@@ -139,13 +139,13 @@
             {/if}
             <div>
                 <p class="text-md font-semibold">
-                    {processorStatus.running ? '프로세서 실행 중' : '프로세서 중지됨'}
+                    {processorStatus.running ? '실행 중' : '중지됨'}
                 </p>
                 <p class="text-sm">
                     {#if processorStatus.running && processorStatus.startedAt}
                         시작 시간: {new Date(processorStatus.startedAt).toLocaleString()}
                     {:else}
-                        자동 이메일 처리가 중지되었습니다
+                        히스토리 테이블 이동 배치 처리가 중지되었습니다
                     {/if}
                 </p>
             </div>
