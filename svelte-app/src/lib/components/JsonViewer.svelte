@@ -1,6 +1,6 @@
 <script lang="ts">
-    import {Button, Input, Toggle} from 'flowbite-svelte';
-    import {ClipboardCopy, ListOrdered, Search} from 'lucide-svelte';
+    import {Input} from 'flowbite-svelte';
+    import { CopyCheckIcon, CopyIcon, ListOrdered, Search} from 'lucide-svelte';
 
     const {json} = $props<{
         json: any;
@@ -95,18 +95,16 @@
             />
         </div>
         <div class="flex items-center gap-2">
-            <Toggle bind:checked={showLineNumbers}>
-                <ListOrdered class="mr-2 h-4 w-4"/>
-                라인 번호
-            </Toggle>
-            <Button
-                    color={copySuccess ? "green" : "primary"}
-                    onclick={copyToClipboard}
-                    size="sm"
-            >
-                <ClipboardCopy class="mr-2 h-4 w-4"/>
-                {copySuccess ? '복사됨!' : 'JSON 복사'}
-            </Button>
+            {#if showLineNumbers}
+                <ListOrdered onclick={() => showLineNumbers = !showLineNumbers} class="mr-2 h-5 w-5 text-green-500"/>
+            {:else}
+                <ListOrdered onclick={() => showLineNumbers = !showLineNumbers} class="mr-2 h-5 w-5"/>
+            {/if}
+            {#if copySuccess}
+                <CopyCheckIcon class="mr-2 h-5 w-5 text-green-500"/>
+            {:else}
+                <CopyIcon onclick={copyToClipboard} class="mr-2 h-5 w-5"/>
+            {/if}
         </div>
     </div>
 

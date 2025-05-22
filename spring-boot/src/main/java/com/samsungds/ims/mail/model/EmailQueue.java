@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Data
@@ -17,6 +18,14 @@ public class EmailQueue {
 
     private String sender;      // 이메일 발신자
     private String subject;     // 제목
+
+    // 본문 관계 설정
+    @OneToOne(mappedBy = "emailQueue", cascade = CascadeType.ALL)
+    private EmailQueueContent content;
+
+    // 수신자 관계 설정
+    @OneToMany(mappedBy = "emailQueue", cascade = CascadeType.ALL)
+    private List<EmailQueueRecipient> recipients;
 
     // 첨부 파일 경로 (쉼표로 구분된 목록)
     private String attachments;

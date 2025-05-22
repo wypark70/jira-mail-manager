@@ -93,7 +93,7 @@ public class SendToSmtpRequestBatchService implements SmartLifecycle {
                 String from = getRandomSender();
                 String to = getRandomRecipient();
                 String subject = getRandomSubject();
-                String body = "이메일 보내기 테스트입니다.\nfrom: " + from + "\nto: " + to + "\nsubject: " + subject;
+                String body = "<h4>이메일 보내기 테스트입니다.</h4>\n<p>from: " + from + "</p>\n<p>to: " + to + "</p>\n<p>subject: " + subject + "</p>\n";
                 sendTestEmail(from, to, subject, body);
             }
             log.info("SMTP 요청 보내기 배치 처리 완료");

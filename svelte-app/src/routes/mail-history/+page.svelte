@@ -28,6 +28,9 @@
         originalEmailId: number;
         sender: string;
         subject: string;
+        content: {
+            body: string;
+        };
         status: string;
         createdAt: string;
         sentAt: string;
@@ -75,6 +78,13 @@
         totalElements: 0,
         currentPage: 0
     };
+
+    let comumns = [
+        { name: 'id', koName: 'ID' },
+        { name: 'subject', koName: '제목' },
+        { name: 'sender', koName: '발신자' },
+        { name: 'sentAt', koName: '발신일' }
+    ];
 
     // 모달 상태 관리
     let showModal = false;
@@ -149,6 +159,7 @@
         const response = await fetch(`${springApiBaseUrl}/email-history/${id}`);
         if (response.ok) {
             selectedMail = await response.json();
+            if (selectedMail) selectedMail.content.body = escapeHTML(selectedMail.content.body);
             showModal = true;
         } else {
             console.error('메일 상세 정보 로딩 실패:', await response.json());
@@ -158,6 +169,17 @@
     async function applyFilters(): Promise<void> {
         pagination.currentPage = 0;
         await loadMailHistory();
+    }
+
+    function escapeHTML(str: string): string {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return str.replace(/[&<>"']/g, (char) => map[char]);
     }
 
     // 초기 데이터 로드
@@ -232,11 +254,11 @@
     {#if mailHistoryPage.content.length > 0}
         <Table shadow hoverable={true} class="rounded-lg overflow-hidden">
             <TableHead class="dark:text-white rounded-xl border-b border-black/20">
-                {#each ['ID', '제목', '발신자', '발신일'] as column}
-                    <TableHeadCell onclick={() => changeSort(column)}>
+                {#each comumns as column}
+                    <TableHeadCell onclick={() => changeSort(column.name)}>
                         <div class="flex cursor-pointer items-center gap-2 hover:text-blue-600">
-                            {column}
-                            {#if pagination.sortBy === column}
+                            {column.koName}
+                            {#if pagination.sortBy === column.name}
                                 <svg class="h-4 w-4 transition-transform {pagination.sortDirection === 'desc' ? 'rotate-180' : ''}"
                                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

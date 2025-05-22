@@ -1,5 +1,6 @@
 package com.samsungds.ims.mail.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -15,7 +16,7 @@ public class EmailHistoryContent {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "LONGTEXT")
     private String body;  // 이메일 본문
 
     @CreationTimestamp
@@ -24,6 +25,7 @@ public class EmailHistoryContent {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    @JsonIgnore
     @OneToOne
     @JoinColumn(name = "email_history_id")
     private EmailHistory emailHistory;

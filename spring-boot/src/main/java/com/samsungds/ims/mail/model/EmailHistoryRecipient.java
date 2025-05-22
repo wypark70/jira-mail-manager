@@ -1,5 +1,6 @@
 package com.samsungds.ims.mail.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -26,6 +27,7 @@ public class EmailHistoryRecipient {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "email_history_id")
     private EmailHistory emailHistory;
