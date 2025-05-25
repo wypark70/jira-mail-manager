@@ -1,4 +1,4 @@
-package com.samsungds.ims.mail.config;
+package com.samsungds.ims.mail.component;
 
 import com.samsungds.ims.mail.service.SmtpInterceptorServerService;
 import lombok.RequiredArgsConstructor;

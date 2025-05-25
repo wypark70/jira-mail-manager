@@ -48,8 +48,9 @@ spring:
 # SMTP 접근 제어 설정 추가
 mail:
   smtp:
-    allowed.ips: 127.0.0.1,192.168.0.10
-    allowed.domains: localhost,kubernetes.docker.internal
+    allowed.ips: 127.0.0.1,12.127.176.145
+    allowed.domains: localhost,jira.samsungds.net
+    allowed.email-domain: samsung.com,partner.samsung.com,partner.sec.co.kr
   batch:
     batch-size: 10
     concurrent-batch-size: 5
@@ -65,3 +66,5 @@ logging:
       audit: OFF
       resultset: OFF
       connection: OFF
+
+debug: true

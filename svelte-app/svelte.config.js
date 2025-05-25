@@ -5,9 +5,11 @@ const config = {
 	preprocess: vitePreprocess(),
 	kit: {
 		adapter: adapter({
-			fallback: 'index.html',
 			pages: 'build',
-			assets: 'build'
+			assets: 'build',
+			fallback: 'index.html',
+			precompress: false,
+			strict: true
 		}),
 		alias: {
 			$lib: './src/lib'

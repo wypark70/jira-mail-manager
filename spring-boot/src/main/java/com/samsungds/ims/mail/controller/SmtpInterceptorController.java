@@ -1,7 +1,7 @@
 package com.samsungds.ims.mail.controller;
 
 import com.samsungds.ims.mail.dto.LogMessage;
-import com.samsungds.ims.mail.service.RootLogStreamService;
+import com.samsungds.ims.mail.service.LogStreamService;
 import com.samsungds.ims.mail.service.SmtpInterceptorServerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -20,16 +20,16 @@ import java.util.Map;
 public class SmtpInterceptorController {
 
     private final SmtpInterceptorServerService smtpInterceptorServerService;
-    private final RootLogStreamService rootLogStreamService;
+    private final LogStreamService logStreamService;
 
-    public SmtpInterceptorController(SmtpInterceptorServerService smtpInterceptorServerService, RootLogStreamService rootLogStreamService) {
+    public SmtpInterceptorController(SmtpInterceptorServerService smtpInterceptorServerService, LogStreamService logStreamService) {
         this.smtpInterceptorServerService = smtpInterceptorServerService;
-        this.rootLogStreamService = rootLogStreamService;
+        this.logStreamService = logStreamService;
     }
 
     @GetMapping(path = "/logs", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<LogMessage> streamLogs() {
-        return rootLogStreamService.getLogStream();
+        return logStreamService.getLogStream();
     }
 
     @PostMapping("/start")

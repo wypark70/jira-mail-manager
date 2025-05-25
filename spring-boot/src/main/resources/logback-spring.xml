@@ -23,12 +23,15 @@
         </rollingPolicy>
     </appender>
 
-    <appender name="LOG_SERVICE" class="com.samsungds.ims.mail.config.LogServiceAppender"/>
+    <appender name="LOG_SERVICE" class="com.samsungds.ims.mail.appender.LogServiceAppender"/>
+
+    <logger name="com.samsungds.ims.mail" level="DEBUG" additivity="false">
+        <appender-ref ref="LOG_SERVICE"/>
+    </logger>
 
     <!-- Root 로거 설정 -->
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="LOG_SERVICE"/>
         <appender-ref ref="APP_FILE"/>
     </root>
 </configuration>

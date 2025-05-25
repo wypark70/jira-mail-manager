@@ -1,6 +1,6 @@
 package com.samsungds.ims.mail.service;
 
-import com.samsungds.ims.mail.handler.SmtpMessageHandlerFactory;
+import com.samsungds.ims.mail.component.SmtpMessageHandlerFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.subethamail.smtp.server.SMTPServer;

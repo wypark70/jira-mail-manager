@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @Slf4j
-public class RootLogStreamService {
+public class LogStreamService {
     private static final Duration TIMEOUT = Duration.ofMinutes(30);
     private static final Duration INITIAL_BACKOFF = Duration.ofSeconds(1);
     private static final Duration MAX_BACKOFF = Duration.ofSeconds(30);
@@ -25,7 +25,7 @@ public class RootLogStreamService {
     private final Sinks.Many<LogMessage> logSink = Sinks.many().multicast().onBackpressureBuffer(10000, false);
     private final Flux<LogMessage> sharedLogStream;
 
-    public RootLogStreamService() {
+    public LogStreamService() {
         this.sharedLogStream = logSink.asFlux()
                 .doOnSubscribe(s -> {
                     int count = activeSubscribers.incrementAndGet();

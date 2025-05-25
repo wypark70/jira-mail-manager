@@ -197,116 +197,127 @@ public class SendToSmtpRequestBatchService implements SmartLifecycle {
         return sampleSubjects[random.nextInt(sampleSubjects.length)];
     }
 
+    private String getRandomDomain() {
+        String[] domains = {
+                "samsung.com",
+                "partner.samsung.com",
+                "partner.sec.co.kr",
+                "naver.com",
+                "google.com"
+        };
+        return domains[random.nextInt(domains.length)];
+    }
+
     private String getRandomSender() {
-        String[] sampleSenders = {
-                "tech.lead@company.com",
-                "project.manager@company.com",
-                "system.admin@company.com",
-                "dev.team@company.com",
-                "security.officer@company.com",
-                "qa.manager@company.com",
-                "support.team@company.com",
-                "infra.team@company.com",
-                "cloud.architect@company.com",
-                "data.analyst@company.com",
-                "frontend.dev@company.com",
-                "backend.dev@company.com",
-                "devops.engineer@company.com",
-                "hr.team@company.com",
-                "finance.dept@company.com",
-                "marketing.team@company.com",
-                "sales.dept@company.com",
-                "research.team@company.com",
-                "product.owner@company.com",
-                "scrum.master@company.com",
-                "ui.designer@company.com",
-                "ux.researcher@company.com",
-                "mobile.dev@company.com",
-                "database.admin@company.com",
-                "network.engineer@company.com",
-                "security.team@company.com",
-                "compliance.officer@company.com",
-                "it.support@company.com",
-                "api.team@company.com",
-                "testing.team@company.com"
+        String[] ids = {
+                "tech.lead",
+                "project.manager",
+                "system.admin",
+                "dev.team",
+                "security.officer",
+                "qa.manager",
+                "support.team",
+                "infra.team",
+                "cloud.architect",
+                "data.analyst",
+                "frontend.dev",
+                "backend.dev",
+                "devops.engineer",
+                "hr.team",
+                "finance.dept",
+                "marketing.team",
+                "sales.dept",
+                "research.team",
+                "product.owner",
+                "scrum.master",
+                "ui.designer",
+                "ux.researcher",
+                "mobile.dev",
+                "database.admin",
+                "network.engineer",
+                "security.team",
+                "compliance.officer",
+                "it.support",
+                "api.team",
+                "testing.team"
         };
 
-        return sampleSenders[random.nextInt(sampleSenders.length)];
+        return ids[random.nextInt(ids.length)] + "@" + getRandomDomain();
     }
 
     private String getRandomRecipient() {
-        String[] sampleRecipients = {
+        String[] ids = {
                 // 개발팀
-                "dev.kim@company.com",
-                "dev.lee@company.com",
-                "dev.park@company.com",
-                "dev.choi@company.com",
-                "dev.jung@company.com",
+                "dev.kim",
+                "dev.lee",
+                "dev.park",
+                "dev.choi",
+                "dev.jung",
 
                 // QA팀
-                "qa.hong@company.com",
-                "qa.kang@company.com",
-                "qa.yoon@company.com",
-                "qa.shin@company.com",
-                "qa.han@company.com",
+                "qa.hong",
+                "qa.kang",
+                "qa.yoon",
+                "qa.shin",
+                "qa.han",
 
                 // 운영팀
-                "ops.lim@company.com",
-                "ops.song@company.com",
-                "ops.jang@company.com",
-                "ops.kwon@company.com",
-                "ops.cho@company.com",
+                "ops.lim",
+                "ops.song",
+                "ops.jang",
+                "ops.kwon",
+                "ops.cho",
 
                 // 기획팀
-                "plan.kim@company.com",
-                "plan.lee@company.com",
-                "plan.park@company.com",
-                "plan.jung@company.com",
-                "plan.ahn@company.com",
+                "plan.kim",
+                "plan.lee",
+                "plan.park",
+                "plan.jung",
+                "plan.ahn",
 
                 // 디자인팀
-                "design.oh@company.com",
-                "design.seo@company.com",
-                "design.yang@company.com",
-                "design.bae@company.com",
-                "design.jeon@company.com",
+                "design.oh",
+                "design.seo",
+                "design.yang",
+                "design.bae",
+                "design.jeon",
 
                 // 마케팅팀
-                "mkt.hwang@company.com",
-                "mkt.yoo@company.com",
-                "mkt.chung@company.com",
-                "mkt.moon@company.com",
-                "mkt.nam@company.com",
+                "mkt.hwang",
+                "mkt.yoo",
+                "mkt.chung",
+                "mkt.moon",
+                "mkt.nam",
 
                 // 영업팀
-                "sales.ko@company.com",
-                "sales.ryu@company.com",
-                "sales.baek@company.com",
-                "sales.kwak@company.com",
-                "sales.ku@company.com",
+                "sales.ko",
+                "sales.ryu",
+                "sales.baek",
+                "sales.kwak",
+                "sales.ku",
 
                 // 인사팀
-                "hr.han@company.com",
-                "hr.im@company.com",
-                "hr.sung@company.com",
-                "hr.gang@company.com",
-                "hr.jin@company.com",
+                "hr.han",
+                "hr.im",
+                "hr.sung",
+                "hr.gang",
+                "hr.jin",
 
                 // 경영지원팀
-                "mgmt.son@company.com",
-                "mgmt.cho@company.com",
-                "mgmt.kook@company.com",
-                "mgmt.yoon@company.com",
-                "mgmt.ha@company.com",
+                "mgmt.son",
+                "mgmt.cho",
+                "mgmt.kook",
+                "mgmt.yoon",
+                "mgmt.ha",
 
                 // 연구소
-                "lab.joo@company.com",
-                "lab.bong@company.com",
-                "lab.woo@company.com",
-                "lab.min@company.com",
-                "lab.suh@company.com"
+                "lab.joo",
+                "lab.bong",
+                "lab.woo",
+                "lab.min",
+                "lab.suh"
         };
 
-        return sampleRecipients[random.nextInt(sampleRecipients.length)];
+        return ids[random.nextInt(ids.length)] + "@" + getRandomDomain();
     }
 }

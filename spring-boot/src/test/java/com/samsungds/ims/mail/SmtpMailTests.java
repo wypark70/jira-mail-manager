@@ -1,6 +1,7 @@
 package com.samsungds.ims.mail;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -227,5 +228,12 @@ public class SmtpMailTests {
         };
 
         return sampleRecipients[(int) (Math.random() * sampleRecipients.length)];
+    }
+
+    @Test
+    void testSend2() {
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        String encodedPassword = encoder.encode("admin"); // 예제 비밀번호
+        System.out.println("[" + encodedPassword + "]" );
     }
 }

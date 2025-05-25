@@ -1,4 +1,4 @@
-package com.samsungds.ims.mail.handler;
+package com.samsungds.ims.mail.component;
 
 import com.samsungds.ims.mail.repository.EmailQueueContentRepository;
 import com.samsungds.ims.mail.repository.EmailQueueRecipientRepository;
@@ -6,7 +6,6 @@ import com.samsungds.ims.mail.repository.EmailQueueRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.subethamail.smtp.MessageContext;
 import org.subethamail.smtp.MessageHandler;
@@ -16,7 +15,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
-import java.util.List;
 
 @RequiredArgsConstructor
 @Component
@@ -26,26 +24,16 @@ public class SmtpMessageHandlerFactory implements MessageHandlerFactory {
     private final EmailQueueRepository emailQueueRepository;
     private final EmailQueueRecipientRepository emailQueueRecipientRepository;
     private final EmailQueueContentRepository emailQueueContentRepository;
-    @Value("${mail.smtp.allowed.ips:127.0.0.1}")
-    private List<String> allowedIps; // 허용된 IP 목록
-    @Value("${mail.smtp.allowed.domains:localhost}")
-    private List<String> allowedDomains; // 허용된 도메인 목록
+    private final AllowDomainFilter allowDomainFilter;
+
 
     @PostConstruct
     public void init() {
-        log.info("===== SMTP 서버 설정 초기화 =====");
-        log.info("허용된 IP 목록: {}", allowedIps);
-        if (allowedDomains != null) {
-            log.info("허용된 도메인 목록: {}", allowedDomains);
-        }
-        log.info("==============================");
+        log.info("SMTP Interceptor Server 시작");
     }
 
     @Override
     public MessageHandler create(MessageContext ctx) {
-        log.info("allowedIps: {}", allowedIps);
-        log.info("allowedDomains: {}", allowedDomains);
-
         String clientIp = getIpAddress(ctx.getRemoteAddress());
         String domain = getDomainFromIp(clientIp);
 
@@ -57,11 +45,7 @@ public class SmtpMessageHandlerFactory implements MessageHandlerFactory {
 
         // 연결이 허용된 경우 메시지 핸들러 반환
         log.info("허용된 클라이언트 IP: {}, 도메인: {}", clientIp, domain);
-        return new SmtpMessageHandler(
-            emailQueueRepository,
-            emailQueueRecipientRepository,
-            emailQueueContentRepository
-        );
+        return new SmtpMessageHandler(emailQueueRepository, emailQueueRecipientRepository, emailQueueContentRepository, allowDomainFilter);
     }
 
     /**
@@ -103,6 +87,6 @@ public class SmtpMessageHandlerFactory implements MessageHandlerFactory {
      * IP 또는 도메인이 허용되었는지 확인
      */
     private boolean isAllowedConnection(String clientIp, String domain) {
-        return allowedIps.contains(clientIp) || allowedDomains.stream().anyMatch(domain::endsWith);
+        return allowDomainFilter.isAllowedIp(clientIp) || allowDomainFilter.isAllowedDomain(domain);
     }
 }

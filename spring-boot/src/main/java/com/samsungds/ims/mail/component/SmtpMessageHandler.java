@@ -1,4 +1,4 @@
-package com.samsungds.ims.mail.handler;
+package com.samsungds.ims.mail.component;
 
 import com.samsungds.ims.mail.model.EmailQueue;
 import com.samsungds.ims.mail.model.EmailQueueContent;
@@ -25,6 +25,7 @@ public class SmtpMessageHandler implements MessageHandler {
     private final EmailQueueRepository emailQueueRepository;
     private final EmailQueueRecipientRepository emailQueueRecipientRepository;
     private final EmailQueueContentRepository EmailQueueContentRepository;
+    private final AllowDomainFilter allowDomainFilter;
 
     private String from;
     private String to;
@@ -43,6 +44,14 @@ public class SmtpMessageHandler implements MessageHandler {
 
     @Override
     public void data(InputStream data) {
+        if (!allowDomainFilter.isAllowedEmailDomain(from)) {
+            log.warn("허용되지 않는 도메인입니다. (From: {})", from);
+            return;
+        }
+        if (!allowDomainFilter.isAllowedEmailDomain(to)) {
+            log.warn("허용되지 않는 도메인입니다. (To: {})", to);
+            return;
+        }
         try {
             Properties props = new Properties();
             Session session = Session.getDefaultInstance(props, null);

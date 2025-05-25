@@ -4,32 +4,36 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import com.samsungds.ims.mail.service.RootLogStreamService;
+import com.samsungds.ims.mail.appender.LogServiceAppender;
+import com.samsungds.ims.mail.service.LogStreamService;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.Iterator;
+import java.util.List;
 
 @Configuration
 public class LogConfig {
-    private final RootLogStreamService rootLogStreamService;
+    private final LogStreamService logStreamService;
 
-    public LogConfig(RootLogStreamService rootLogStreamService) {
-        this.rootLogStreamService = rootLogStreamService;
+    public LogConfig(LogStreamService logStreamService) {
+        this.logStreamService = logStreamService;
     }
 
     @PostConstruct
     public void init() {
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        Logger rootLogger = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
+        List<Logger> loggerList = loggerContext.getLoggerList();
 
-        Iterator<Appender<ILoggingEvent>> appenderIterator = rootLogger.iteratorForAppenders();
-        while(appenderIterator.hasNext()) {
-            Appender<ILoggingEvent> appender = appenderIterator.next();
-            if (appender instanceof LogServiceAppender) {
-                ((LogServiceAppender) appender).setLogService(rootLogStreamService);
+        loggerList.forEach(logger -> {
+            Iterator<Appender<ILoggingEvent>> appenderIterator = logger.iteratorForAppenders();
+            while(appenderIterator.hasNext()) {
+                Appender<ILoggingEvent> appender = appenderIterator.next();
+                if (appender instanceof LogServiceAppender) {
+                    ((LogServiceAppender) appender).setLogService(logStreamService);
+                }
             }
-        }
+        });
     }
 }

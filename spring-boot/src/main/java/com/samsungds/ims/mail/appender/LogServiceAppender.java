@@ -1,24 +1,24 @@
-package com.samsungds.ims.mail.config;
+package com.samsungds.ims.mail.appender;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import com.samsungds.ims.mail.dto.LogMessage;
-import com.samsungds.ims.mail.service.RootLogStreamService;
+import com.samsungds.ims.mail.service.LogStreamService;
 
 public class LogServiceAppender extends AppenderBase<ILoggingEvent> {
-    private RootLogStreamService rootLogStreamService;
+    private LogStreamService logStreamService;
 
-    public void setLogService(RootLogStreamService rootLogStreamService) {
-        this.rootLogStreamService = rootLogStreamService;
+    public void setLogService(LogStreamService logStreamService) {
+        this.logStreamService = logStreamService;
     }
 
     @Override
     protected void append(ILoggingEvent event) {
-        if (rootLogStreamService != null) {
+        if (logStreamService != null) {
             String level = event.getLevel().toString();
             String message = event.getFormattedMessage();
             LogMessage logMessage = new LogMessage(message, level);
-            rootLogStreamService.addLog(logMessage);
+            logStreamService.addLog(logMessage);
         }
     }
 }
