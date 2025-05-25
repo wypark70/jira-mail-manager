@@ -55,13 +55,53 @@
 
     async function handleMoveSentToHistory() {
         try {
-            const response = await fetch(`${springApiBaseUrl}/email-queue/move-to-history`, {
+            const response = await fetch(`${springApiBaseUrl}/email-queue/move-to-history/SENT`, {
                 method: 'POST'
             });
             const message = await response.text();
             alertService.success(message);
         } catch (error) {
-            console.error('실패한 이메일 재시도 오류:', error);
+            console.error('이력 테이블로 이동 오류:', error);
+        }
+    }
+
+    function moveFailedToHistory() {
+        showConfirm(
+            '이력 테이블로 이동',
+            '발신 성공한 이메일을 이력 테이블로 이동처럼 처리하시겠습니까?',
+            handleFailedSentToHistory
+        );
+    }
+
+    async function handleFailedSentToHistory() {
+        try {
+            const response = await fetch(`${springApiBaseUrl}/email-queue/move-to-history/FAILED`, {
+                method: 'POST'
+            });
+            const message = await response.text();
+            alertService.success(message);
+        } catch (error) {
+            console.error('이력 테이블로 이동 오류:', error);
+        }
+    }
+
+    function deleteAllHistory() {
+        showConfirm(
+            '이력 테이블 데이터 삭제',
+            '이력 테이블 데이터를 삭제 처리하시겠습니까?',
+            handleDeleteAllHistory
+        );
+    }
+
+    async function handleDeleteAllHistory() {
+        try {
+            const response = await fetch(`${springApiBaseUrl}/email-history/delete-all`, {
+                method: 'DELETE'
+            });
+            const message = await response.text();
+            alertService.success(message);
+        } catch (error) {
+            console.error('이력 테이블 데이터 삭제 오류:', error);
         }
     }
 
@@ -97,7 +137,7 @@
             href="/mail-queue"
             size="xl"
     >
-        <h3 class="mb-2 text-lg font-semibold">메일 큐 관리</h3>
+        <h3 class="mb-2 text-lg font-semibold">👉 메일 큐 관리</h3>
         <p>메일 큐를 확인하고 관리합니다.</p>
     </Card>
 
@@ -106,7 +146,7 @@
             onclick={processEmailQueueBatch}
             size="xl"
     >
-        <h3 class="mb-2 text-lg font-semibold">배치 실행</h3>
+        <h3 class="mb-2 text-lg font-semibold">👉 배치 실행</h3>
         <p>메일 보내는 배치 프로그램을 실행합니다.</p>
     </Card>
 
@@ -115,7 +155,7 @@
             onclick={retryFailedEmail}
             size="xl"
     >
-        <h3 class="mb-2 text-lg font-semibold">실패한 이메일 재시도</h3>
+        <h3 class="mb-2 text-lg font-semibold">👉 실패한 이메일 재시도</h3>
         <p>발송 실패한 메일을 재시도 상태로 변경 합니다.</p>
     </Card>
 
@@ -124,7 +164,25 @@
             onclick={moveSentToHistory}
             size="xl"
     >
-        <h3 class="mb-2 text-lg font-semibold">발신한 이메일 이력 테이블로 이동</h3>
+        <h3 class="mb-2 text-lg font-semibold">👉 발신한 이메일 이력 테이블로 이동</h3>
         <p>발신 성공한 이메일을 이력 테이블로 이동처리 합니다.</p>
+    </Card>
+
+    <Card
+            class="rounded-lg p-6 shadow-md transition-shadow hover:shadow-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+            onclick={moveFailedToHistory}
+            size="xl"
+    >
+        <h3 class="mb-2 text-lg font-semibold">👉 실패한 이메일 이력 테이블로 이동</h3>
+        <p>실패한 이메일을 이력 테이블로 이동처리 합니다.</p>
+    </Card>
+
+    <Card
+            class="rounded-lg p-6 shadow-md transition-shadow hover:shadow-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+            onclick={deleteAllHistory}
+            size="xl"
+    >
+        <h3 class="mb-2 text-lg font-semibold">👉 이력 테이블 데이터 삭제</h3>
+        <p>이력 테이블 데이터를 삭제 처리합니다.</p>
     </Card>
 </div>

@@ -257,10 +257,10 @@ public class EmailQueueController {
         }
     }
 
-    @PostMapping("/move-to-history")
-    public ResponseEntity<String> moveToHistory() {
+    @PostMapping("/move-to-history/{status}")
+    public ResponseEntity<String> moveToHistory(@PathVariable EmailQueue.EmailStatus status) {
         try {
-            int movedCount = emailHistoryService.moveAllSentEmailsToHistory();
+            int movedCount = emailHistoryService.moveAllEmailsToHistoryByStatus(status);
             return ResponseEntity.ok(String.format("성공적으로 %d개의 이메일을 히스토리로 이동했습니다.", movedCount));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

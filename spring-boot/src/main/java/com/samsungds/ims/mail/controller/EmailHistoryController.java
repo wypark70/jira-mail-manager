@@ -3,6 +3,7 @@ package com.samsungds.ims.mail.controller;
 import com.samsungds.ims.mail.model.EmailHistory;
 import com.samsungds.ims.mail.model.EmailQueue;
 import com.samsungds.ims.mail.repository.EmailHistoryRepository;
+import com.samsungds.ims.mail.service.EmailHistoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +26,7 @@ import java.util.Optional;
 @Slf4j
 public class EmailHistoryController {
     private final EmailHistoryRepository emailHistoryRepository;
+    private final EmailHistoryService emailHistoryService;
 
     /**
      * 이메일 이력 상세 정보 조회
@@ -73,6 +76,17 @@ public class EmailHistoryController {
         } catch (IllegalArgumentException e) {
             log.error("검색 파라미터 오류", e);
             return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @DeleteMapping("/delete-all")
+    public ResponseEntity<String> deleteAllHistory() {
+        try {
+            long deleteCount = emailHistoryService.deleteAllHistory();
+            return ResponseEntity.ok(deleteCount + "개의 히스토리가 삭제되었습니다.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("히스토리 삭제 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
 }

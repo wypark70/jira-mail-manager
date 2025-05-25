@@ -37,9 +37,8 @@ public class EmailHistoryService {
     }
 
     @Transactional
-    public int moveAllSentEmailsToHistory() {
-        // 1. 발송 완료된 이메일 큐 모두 조회
-        List<EmailQueue> sentEmails = emailQueueRepository.findByStatus(EmailQueue.EmailStatus.SENT);
+    public int moveAllEmailsToHistoryByStatus(EmailQueue.EmailStatus status) {
+        List<EmailQueue> sentEmails = emailQueueRepository.findByStatus(status);
         if (sentEmails.isEmpty()) {
             return 0;
         }
@@ -48,7 +47,6 @@ public class EmailHistoryService {
                 .map(EmailQueue::getId)
                 .collect(Collectors.toList());
 
-        // 2. 이메일 히스토리 데이터 일괄 생성
         List<EmailHistory> emailHistories = sentEmails.stream()
                 .map(queue -> {
                     EmailHistory history = new EmailHistory();
@@ -63,13 +61,12 @@ public class EmailHistoryService {
                     return history;
                 })
                 .collect(Collectors.toList());
-        
+
         List<EmailHistory> savedHistories = emailHistoryRepository.saveAll(emailHistories);
 
-        // 3. 컨텐츠 일괄 복사
         List<EmailQueueContent> queueContents = emailQueueContentRepository.findAllById(emailIds);
         List<EmailHistoryContent> historyContents = new ArrayList<>();
-        
+
         for (int i = 0; i < queueContents.size(); i++) {
             EmailHistoryContent historyContent = new EmailHistoryContent();
             historyContent.setEmailHistory(savedHistories.get(i));
@@ -78,12 +75,11 @@ public class EmailHistoryService {
         }
         emailHistoryContentRepository.saveAll(historyContents);
 
-        // 4. 수신자 정보 일괄 복사
         List<EmailQueueRecipient> queueRecipients = emailQueueRecipientRepository.findAllByEmailQueueIdIn(emailIds);
         Map<Long, EmailHistory> historyMap = savedHistories.stream()
                 .collect(Collectors.toMap(
-                    history -> history.getOriginalEmailId(), 
-                    history -> history
+                        EmailHistory::getOriginalEmailId,
+                        history -> history
                 ));
 
         List<EmailHistoryRecipient> historyRecipients = queueRecipients.stream()
@@ -97,11 +93,20 @@ public class EmailHistoryService {
                 .collect(Collectors.toList());
         emailHistoryRecipientRepository.saveAll(historyRecipients);
 
-        // 5. 큐 데이터 일괄 삭제
         emailQueueRecipientRepository.deleteAllByEmailQueueIdIn(emailIds);
         emailQueueContentRepository.deleteAllById(emailIds);
         emailQueueRepository.deleteAllById(emailIds);
 
         return sentEmails.size();
+    }
+
+
+    @Transactional
+    public long deleteAllHistory() {
+        long historyCount = emailHistoryRepository.count();
+        emailHistoryContentRepository.deleteAll();
+        emailHistoryRecipientRepository.deleteAll();
+        emailHistoryRepository.deleteAll();
+        return historyCount;
     }
 }

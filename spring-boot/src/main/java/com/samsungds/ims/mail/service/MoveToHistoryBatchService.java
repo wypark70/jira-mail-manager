@@ -79,7 +79,7 @@ public class MoveToHistoryBatchService implements SmartLifecycle {
         }
         log.info("히스토리 테일블로 이동처리 배치 시작, 프로세서 ID: {}", processorId);
         try {
-            int moveCnt = emailHistoryService.moveAllSentEmailsToHistory();
+            int moveCnt = emailHistoryService.moveAllEmailsToHistoryByStatus(EmailQueue.EmailStatus.SENT);
             log.info("{}개의 이메일이 히스토리 테일블로 이동처리 되었습니다.", moveCnt);
         } catch (Exception e) {
             log.error("히스토리 테일블로 이동처리 배치 처리 중 오류 발생", e);

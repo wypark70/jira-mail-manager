@@ -1,7 +1,7 @@
 // lib/utils/buffer.ts
 export class Buffer<T> {
     private items: T[] = [];
-    private maxSize: number;
+    private readonly maxSize: number;
 
     constructor(maxSize: number) {
         this.maxSize = maxSize;
