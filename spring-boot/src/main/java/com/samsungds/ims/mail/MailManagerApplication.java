@@ -22,15 +22,27 @@ public class MailManagerApplication {
     public CommandLineRunner addDefaultUser(AppUserService userService) {
         return (args) -> {
             try {
-                // "user" / "password" 사용자 등록
-                AppUser appUser = userService.saveUser("user", "user", Set.of("ROLE_USER"), "user@samsung.com");
-                log.info("Test user 'user' registered successfully.");
+                AppUser appUser = userService.saveUser("wooyong.park", "jbj4a", Set.of("ROLE_ADMIN"), "wooyong.park@partner.samsung.com");
+                log.info("Test user 'wooyong.park' registered successfully.");
             } catch (RuntimeException e) {
-                log.error("Test user 'user' already exists or failed to register: {}", e.getMessage());
+                log.error("Test user 'wooyong.park' already exists or failed to register: {}", e.getMessage());
             }
 
             try {
-                // "admin" / "adminpass" 관리자 사용자 등록
+                AppUser appUser = userService.saveUser("kbeom.nam", "kbeom.nam", Set.of("ROLE_ADMIN", "ROLE_USER"), "kbeom.nam@samsung.com");
+                log.info("Test admin 'kbeom.nam' registered successfully.");
+            } catch (RuntimeException e) {
+                log.error("Test admin 'kbeom.nam' already exists or failed to register: {}", e.getMessage());
+            }
+
+            try {
+                AppUser appUser = userService.saveUser("yourim.an", "yourim.an", Set.of("ROLE_ADMIN", "ROLE_USER"), "yourim.an@samsung.com");
+                log.info("Test admin 'yourim.an' registered successfully.");
+            } catch (RuntimeException e) {
+                log.error("Test admin 'yourim.an' already exists or failed to register: {}", e.getMessage());
+            }
+
+            try {
                 AppUser appUser = userService.saveUser("admin", "admin", Set.of("ROLE_ADMIN", "ROLE_USER"), "admin@samsung.com");
                 log.info("Test admin 'admin' registered successfully.");
             } catch (RuntimeException e) {

@@ -27,6 +27,9 @@ dependencies {
     // SMTP
     implementation 'org.subethamail:subethasmtp:3.1.7'
 
+    // unirest-java
+    implementation 'com.mashape.unirest:unirest-java:1.4.9'
+
     // Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-data-rest'
@@ -34,11 +37,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
-
-    // Template
-    implementation 'org.springframework.boot:spring-boot-starter-groovy-templates'
-    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-
 
     // Apache
     implementation 'org.apache.commons:commons-lang3:3.14.0'

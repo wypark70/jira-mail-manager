@@ -1,5 +1,8 @@
 package com.samsungds.ims.mail.service;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.samsungds.ims.mail.model.EmailQueue;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -12,6 +15,7 @@ import java.util.concurrent.CompletableFuture;
 @Service
 @Slf4j
 public class EmailQueueBatchAsyncService {
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * 이메일 비동기 처리
@@ -21,7 +25,9 @@ public class EmailQueueBatchAsyncService {
     public CompletableFuture<EmailQueue> processEmail(EmailQueue email) {
         try {
             log.info("이메일 ID {} 비동기 발송 처리 시작...", email.getId());
-            log.info("이메일 발송 시작 - ID: {}, 제목: {}", email.getId(), email.getSubject());
+            objectMapper.registerModule(new JavaTimeModule());
+            objectMapper.addMixIn(EmailQueue.class, EmailQueueMixin.class);
+            log.info("이메일 발송 시작: {}", objectMapper.writeValueAsString(email));
             simulateEmailSending(email);
             email.setProcessorId(generateProcessorId());
             email.setLocked(false);
@@ -78,6 +84,7 @@ public class EmailQueueBatchAsyncService {
                     email.getSender()
             );
         }
-
     }
+    @JsonIgnoreProperties({"content", "recipients"})
+    static class EmailQueueMixin {}
 }
