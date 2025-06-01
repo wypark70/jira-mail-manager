@@ -1,5 +1,6 @@
 package com.samsungds.ims.mail.component;
 
+import com.samsungds.ims.mail.repository.EmailQueueAttachmentRepository;
 import com.samsungds.ims.mail.repository.EmailQueueContentRepository;
 import com.samsungds.ims.mail.repository.EmailQueueRecipientRepository;
 import com.samsungds.ims.mail.repository.EmailQueueRepository;
@@ -24,8 +25,8 @@ public class SmtpMessageHandlerFactory implements MessageHandlerFactory {
     private final EmailQueueRepository emailQueueRepository;
     private final EmailQueueRecipientRepository emailQueueRecipientRepository;
     private final EmailQueueContentRepository emailQueueContentRepository;
+    private final EmailQueueAttachmentRepository emailQueueAttachmentRepository;
     private final AllowDomainFilter allowDomainFilter;
-
 
     @PostConstruct
     public void init() {
@@ -45,7 +46,7 @@ public class SmtpMessageHandlerFactory implements MessageHandlerFactory {
 
         // 연결이 허용된 경우 메시지 핸들러 반환
         log.info("허용된 클라이언트 IP: {}, 도메인: {}", clientIp, domain);
-        return new SmtpMessageHandler(emailQueueRepository, emailQueueRecipientRepository, emailQueueContentRepository, allowDomainFilter);
+        return new SmtpMessageHandler(emailQueueRepository, emailQueueRecipientRepository, emailQueueContentRepository, emailQueueAttachmentRepository, allowDomainFilter);
     }
 
     /**
