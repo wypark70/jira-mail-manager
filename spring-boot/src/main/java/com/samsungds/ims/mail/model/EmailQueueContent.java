@@ -20,7 +20,7 @@ public class EmailQueueContent {
     private Long id;
 
     @Column(columnDefinition = "LONGTEXT")
-    private String body;        // 본문
+    private String body;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

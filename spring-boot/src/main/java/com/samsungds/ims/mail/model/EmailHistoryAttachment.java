@@ -8,16 +8,16 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-@Table(name = "email_queue_attachment")
-public class EmailQueueAttachment {
+@Table(name = "email_history_attachment")
+public class EmailHistoryAttachment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "email_queue_id", nullable = false)
-    private EmailQueue emailQueue;
+    @JoinColumn(name = "email_history_id", nullable = false)
+    private EmailHistory emailHistory;
 
     @Column(nullable = false)
     private String fileName;

@@ -34,6 +34,9 @@ public class EmailHistory {
     @OneToMany(mappedBy = "emailHistory", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<EmailHistoryRecipient> recipients = new ArrayList<>();
 
+    @OneToMany(mappedBy = "emailHistory", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<EmailHistoryAttachment> attachments = new ArrayList<>();
+
     private String processorId;    // 처리한 프로세서 ID
     private String errorMessage;   // 오류 메시지
     private int retryCount;        // 재시도 횟수

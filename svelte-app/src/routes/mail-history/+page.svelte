@@ -172,14 +172,9 @@
     }
 
     function escapeHTML(str: string): string {
-        const map = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        };
-        return str.replace(/[&<>"']/g, (char) => map[char]);
+        const tempElement = document.createElement('div');
+        tempElement.textContent = str;
+        return tempElement.innerHTML;
     }
 
     // 초기 데이터 로드

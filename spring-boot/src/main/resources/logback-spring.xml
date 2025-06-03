@@ -27,6 +27,8 @@
 
     <logger name="com.samsungds.ims.mail" level="DEBUG" additivity="false">
         <appender-ref ref="LOG_SERVICE"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="APP_FILE"/>
     </logger>
 
     <!-- Root 로거 설정 -->

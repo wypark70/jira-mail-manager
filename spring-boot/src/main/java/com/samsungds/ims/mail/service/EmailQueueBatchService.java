@@ -33,9 +33,12 @@ public class EmailQueueBatchService implements SmartLifecycle {
     // processorId 생성 방법
     private String generateProcessorId() {
         try {
-            return InetAddress.getLocalHost().getHostName() + "-"
-                    + ProcessHandle.current().pid() + "-"
-                    + UUID.randomUUID().toString().substring(0, 8);
+            return String.join(
+                    "-",
+                    InetAddress.getLocalHost().getHostName(),
+                    String.valueOf(ProcessHandle.current().pid()),
+                    UUID.randomUUID().toString().substring(0, 8)
+            );
         } catch (Exception e) {
             return UUID.randomUUID().toString();
         }

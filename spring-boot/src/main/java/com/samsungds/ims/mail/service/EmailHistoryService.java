@@ -2,52 +2,41 @@ package com.samsungds.ims.mail.service;
 
 import com.samsungds.ims.mail.model.*;
 import com.samsungds.ims.mail.repository.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class EmailHistoryService {
-
     private final EmailQueueRepository emailQueueRepository;
     private final EmailQueueContentRepository emailQueueContentRepository;
     private final EmailQueueRecipientRepository emailQueueRecipientRepository;
+    private final EmailQueueAttachmentRepository emailQueueAttachmentRepository;
     private final EmailHistoryRepository emailHistoryRepository;
     private final EmailHistoryContentRepository emailHistoryContentRepository;
     private final EmailHistoryRecipientRepository emailHistoryRecipientRepository;
-
-    public EmailHistoryService(
-            EmailQueueRepository emailQueueRepository,
-            EmailQueueContentRepository emailQueueContentRepository,
-            EmailQueueRecipientRepository emailQueueRecipientRepository,
-            EmailHistoryRepository emailHistoryRepository,
-            EmailHistoryContentRepository emailHistoryContentRepository,
-            EmailHistoryRecipientRepository emailHistoryRecipientRepository) {
-        this.emailQueueRepository = emailQueueRepository;
-        this.emailQueueContentRepository = emailQueueContentRepository;
-        this.emailQueueRecipientRepository = emailQueueRecipientRepository;
-        this.emailHistoryRepository = emailHistoryRepository;
-        this.emailHistoryContentRepository = emailHistoryContentRepository;
-        this.emailHistoryRecipientRepository = emailHistoryRecipientRepository;
-    }
+    private final EmailHistoryAttachmentRepository emailHistoryAttachmentRepository;
 
     @Transactional
-    public int moveAllEmailsToHistoryByStatus(EmailQueue.EmailStatus status) {
-        List<EmailQueue> sentEmails = emailQueueRepository.findByStatus(status);
-        if (sentEmails.isEmpty()) {
+    public int moveEmailsToHistoryByStatus(EmailQueue.EmailStatus status) {
+        List<EmailQueue> emails = emailQueueRepository.findByStatus(status);
+        if (emails.isEmpty()) {
             return 0;
         }
 
-        List<Long> emailIds = sentEmails.stream()
+        List<Long> emailIds = emails.stream()
                 .map(EmailQueue::getId)
                 .collect(Collectors.toList());
 
-        List<EmailHistory> emailHistories = sentEmails.stream()
+        List<EmailHistory> emailHistories = emails.stream()
                 .map(queue -> {
                     EmailHistory history = new EmailHistory();
                     history.setOriginalEmailId(queue.getId());
@@ -76,7 +65,7 @@ public class EmailHistoryService {
         emailHistoryContentRepository.saveAll(historyContents);
 
         List<EmailQueueRecipient> queueRecipients = emailQueueRecipientRepository.findAllByEmailQueueIdIn(emailIds);
-        Map<Long, EmailHistory> historyMap = savedHistories.stream()
+        Map<Long, EmailHistory> historyRecipientsMap = savedHistories.stream()
                 .collect(Collectors.toMap(
                         EmailHistory::getOriginalEmailId,
                         history -> history
@@ -85,19 +74,39 @@ public class EmailHistoryService {
         List<EmailHistoryRecipient> historyRecipients = queueRecipients.stream()
                 .map(qr -> {
                     EmailHistoryRecipient hr = new EmailHistoryRecipient();
-                    hr.setEmailHistory(historyMap.get(qr.getEmailQueue().getId()));
+                    hr.setEmailHistory(historyRecipientsMap.get(qr.getEmailQueue().getId()));
                     hr.setEmail(qr.getEmail());
                     hr.setType(qr.getType());
                     return hr;
                 })
-                .collect(Collectors.toList());
+                .toList();
         emailHistoryRecipientRepository.saveAll(historyRecipients);
 
+        List<EmailQueueAttachment> queueAttachments = emailQueueAttachmentRepository.findAllByEmailQueueIdIn(emailIds);
+        Map<Long, EmailHistory> historyAttachmentsMap = savedHistories.stream()
+                .collect(Collectors.toMap(
+                        EmailHistory::getOriginalEmailId,
+                        history -> history
+                ));
+
+        List<EmailHistoryAttachment> historyAttachment = queueAttachments.stream()
+                .map(qa -> {
+                    EmailHistoryAttachment ha = new EmailHistoryAttachment();
+                    ha.setEmailHistory(historyAttachmentsMap.get(qa.getEmailQueue().getId()));
+                    ha.setContentType(qa.getContentType());
+                    ha.setFileName(qa.getFileName());
+                    ha.setFilePath(qa.getFilePath());
+                    return ha;
+                })
+                .toList();
+        emailHistoryAttachmentRepository.saveAll(historyAttachment);
+
+        emailQueueContentRepository.deleteAllByEmailQueueIdIn(emailIds);
         emailQueueRecipientRepository.deleteAllByEmailQueueIdIn(emailIds);
-        emailQueueContentRepository.deleteAllById(emailIds);
+        emailQueueAttachmentRepository.deleteAllByEmailQueueIdIn(emailIds);
         emailQueueRepository.deleteAllById(emailIds);
 
-        return sentEmails.size();
+        return emails.size();
     }
 
 

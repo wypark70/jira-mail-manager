@@ -10,8 +10,8 @@ import java.util.List;
 
 @Repository
 public interface EmailQueueRecipientRepository extends JpaRepository<EmailQueueRecipient, Long> {
-    boolean existsByEmailAndEmailQueue(String email, EmailQueue emailQueue);
-    void deleteAllByEmailQueueIdIn(Collection<Long> emailQueueIds);
-    List<EmailQueueRecipient> findAllByEmailQueueIdIn(Collection<Long> emailQueueIds);
     List<EmailQueueRecipient> findByEmailQueueId(Long emailQueueId);
+    boolean existsByEmailAndEmailQueue(String email, EmailQueue emailQueue);
+    List<EmailQueueRecipient> findAllByEmailQueueIdIn(Collection<Long> emailQueueIds);
+    void deleteAllByEmailQueueIdIn(Collection<Long> emailQueueIds);
 }

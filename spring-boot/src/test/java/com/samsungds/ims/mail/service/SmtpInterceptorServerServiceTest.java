@@ -1,35 +1,43 @@
-package com.samsungds.ims.mail;
+package com.samsungds.ims.mail.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.Transport;
+import javax.activation.DataHandler;
+import javax.activation.DataSource;
+import javax.activation.FileDataSource;
+import javax.mail.*;
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
 import java.util.Properties;
+import java.util.Random;
 
-public class SmtpMailTests {
+@Slf4j
+class SmtpInterceptorServerServiceTest {
     private static final String SMTP_HOST = "localhost";
     private static final int SMTP_PORT = 25;
+    private final Random random = new Random();
+    private final boolean running = false;
 
     @Test
-    void TestSend() {
+    public void processSendToSmtpRequest() {
         try {
-            for (int i = 0; i < 500; i++) {
-                // 테스트 이메일 발송
+            // 10 ~ 50개의 메일을 발송
+            int randomNumber = random.nextInt(31) + 20;
+            for (int i = 0; i < randomNumber; i++) {
+                String from = getRandomSender();
+                String to = getRandomRecipient();
                 String subject = getRandomSubject();
-                String sender = getRandomSender();
-                String recipient = getRandomRecipient();
-                String body = subject + "\n" + sender + "\n" + recipient;
-                sendTestEmail(sender, recipient, subject, body);
+                String body = "<h4>이메일 보내기 테스트입니다.</h4>\n<p>from: " + from + "</p>\n<p>to: " + to + "</p>\n<p>subject: " + subject + "</p>\n";
+                String userName = from.split("@")[0];
+                String userLink = "<a class=\"user-hover\" rel=\"" + userName + "\" href=\"https://www.google.com/search?q=" + userName + "\">" + userName + "</a>";
+                sendTestEmail(from, to, subject, body + "\n" + userLink);
             }
-        } catch (MessagingException e) {
-            System.out.println("이메일 발송 실패: " + e.getMessage());
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            log.info("SMTP 요청 보내기 배치 처리 완료");
+        } catch (Exception e) {
+            log.error("SMTP 요청 보내기 배치 처리 중 오류 발생", e);
         }
     }
 
@@ -52,6 +60,29 @@ public class SmtpMailTests {
         message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
         message.setSubject(subject);
         message.setText(body);
+
+        // Create the message body part
+        BodyPart messageBodyPart = new MimeBodyPart();
+
+        // Fill the message
+        messageBodyPart.setText(body);
+
+        // Create a multipart message for attachment
+        Multipart multipart = new MimeMultipart();
+
+        // Set text message part
+        multipart.addBodyPart(messageBodyPart);
+
+        // Second part is attachment
+        messageBodyPart = new MimeBodyPart();
+        String filename = "HELP.md";
+        DataSource source = new FileDataSource(filename);
+        messageBodyPart.setDataHandler(new DataHandler(source));
+        messageBodyPart.setFileName(filename);
+        multipart.addBodyPart(messageBodyPart);
+
+        // Send the complete message parts
+        message.setContent(multipart);
 
         // 메일 전송
         Transport.send(message);
@@ -114,126 +145,105 @@ public class SmtpMailTests {
                 "[요청] 프로젝트 리소스 검토"
         };
 
-        return sampleSubjects[(int) (Math.random() * sampleSubjects.length)];
+        return sampleSubjects[random.nextInt(sampleSubjects.length)];
+    }
+
+    private String getRandomDomain() {
+        String[] domains = {
+                "partner.samsung.com",
+                "partner.sec.co.kr",
+                "naver.com",
+                "google.com"
+        };
+        return domains[random.nextInt(domains.length)];
     }
 
     private String getRandomSender() {
-        String[] sampleSenders = {
-                "tech.lead@company.com",
-                "project.manager@company.com",
-                "system.admin@company.com",
-                "dev.team@company.com",
-                "security.officer@company.com",
-                "qa.manager@company.com",
-                "support.team@company.com",
-                "infra.team@company.com",
-                "cloud.architect@company.com",
-                "data.analyst@company.com",
-                "frontend.dev@company.com",
-                "backend.dev@company.com",
-                "devops.engineer@company.com",
-                "hr.team@company.com",
-                "finance.dept@company.com",
-                "marketing.team@company.com",
-                "sales.dept@company.com",
-                "research.team@company.com",
-                "product.owner@company.com",
-                "scrum.master@company.com",
-                "ui.designer@company.com",
-                "ux.researcher@company.com",
-                "mobile.dev@company.com",
-                "database.admin@company.com",
-                "network.engineer@company.com",
-                "security.team@company.com",
-                "compliance.officer@company.com",
-                "it.support@company.com",
-                "api.team@company.com",
-                "testing.team@company.com"
+        String[] ids = {
+                "admin",
+                "tech.lead",
+                "project.manager",
+                "system.admin",
+                "dev.team",
+                "qa.manager"
         };
 
-        return sampleSenders[(int) (Math.random() * sampleSenders.length)];
+        return ids[random.nextInt(ids.length)] + "@" + getRandomDomain();
     }
 
     private String getRandomRecipient() {
-        String[] sampleRecipients = {
+        String[] ids = {
                 // 개발팀
-                "dev.kim@company.com",
-                "dev.lee@company.com",
-                "dev.park@company.com",
-                "dev.choi@company.com",
-                "dev.jung@company.com",
+                "dev.kim",
+                "dev.lee",
+                "dev.park",
+                "dev.choi",
+                "dev.jung",
 
                 // QA팀
-                "qa.hong@company.com",
-                "qa.kang@company.com",
-                "qa.yoon@company.com",
-                "qa.shin@company.com",
-                "qa.han@company.com",
+                "qa.hong",
+                "qa.kang",
+                "qa.yoon",
+                "qa.shin",
+                "qa.han",
 
                 // 운영팀
-                "ops.lim@company.com",
-                "ops.song@company.com",
-                "ops.jang@company.com",
-                "ops.kwon@company.com",
-                "ops.cho@company.com",
+                "ops.lim",
+                "ops.song",
+                "ops.jang",
+                "ops.kwon",
+                "ops.cho",
 
                 // 기획팀
-                "plan.kim@company.com",
-                "plan.lee@company.com",
-                "plan.park@company.com",
-                "plan.jung@company.com",
-                "plan.ahn@company.com",
+                "plan.kim",
+                "plan.lee",
+                "plan.park",
+                "plan.jung",
+                "plan.ahn",
 
                 // 디자인팀
-                "design.oh@company.com",
-                "design.seo@company.com",
-                "design.yang@company.com",
-                "design.bae@company.com",
-                "design.jeon@company.com",
+                "design.oh",
+                "design.seo",
+                "design.yang",
+                "design.bae",
+                "design.jeon",
 
                 // 마케팅팀
-                "mkt.hwang@company.com",
-                "mkt.yoo@company.com",
-                "mkt.chung@company.com",
-                "mkt.moon@company.com",
-                "mkt.nam@company.com",
+                "mkt.hwang",
+                "mkt.yoo",
+                "mkt.chung",
+                "mkt.moon",
+                "mkt.nam",
 
                 // 영업팀
-                "sales.ko@company.com",
-                "sales.ryu@company.com",
-                "sales.baek@company.com",
-                "sales.kwak@company.com",
-                "sales.ku@company.com",
+                "sales.ko",
+                "sales.ryu",
+                "sales.baek",
+                "sales.kwak",
+                "sales.ku",
 
                 // 인사팀
-                "hr.han@company.com",
-                "hr.im@company.com",
-                "hr.sung@company.com",
-                "hr.gang@company.com",
-                "hr.jin@company.com",
+                "hr.han",
+                "hr.im",
+                "hr.sung",
+                "hr.gang",
+                "hr.jin",
 
                 // 경영지원팀
-                "mgmt.son@company.com",
-                "mgmt.cho@company.com",
-                "mgmt.kook@company.com",
-                "mgmt.yoon@company.com",
-                "mgmt.ha@company.com",
+                "mgmt.son",
+                "mgmt.cho",
+                "mgmt.kook",
+                "mgmt.yoon",
+                "mgmt.ha",
 
                 // 연구소
-                "lab.joo@company.com",
-                "lab.bong@company.com",
-                "lab.woo@company.com",
-                "lab.min@company.com",
-                "lab.suh@company.com"
+                "lab.joo",
+                "lab.bong",
+                "lab.woo",
+                "lab.min",
+                "lab.suh"
         };
 
-        return sampleRecipients[(int) (Math.random() * sampleRecipients.length)];
-    }
-
-    @Test
-    void testSend2() {
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        String encodedPassword = encoder.encode("admin"); // 예제 비밀번호
-        System.out.println("[" + encodedPassword + "]" );
+        return ids[random.nextInt(ids.length)] + "@" + getRandomDomain();
     }
 }

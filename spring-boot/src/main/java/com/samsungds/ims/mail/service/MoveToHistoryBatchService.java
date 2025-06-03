@@ -4,7 +4,6 @@ import com.samsungds.ims.mail.dto.ProcessorStatus;
 import com.samsungds.ims.mail.model.EmailQueue;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -12,8 +11,6 @@ import org.springframework.stereotype.Service;
 import java.net.InetAddress;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,9 +23,12 @@ public class MoveToHistoryBatchService implements SmartLifecycle {
     // processorId 생성
     private String generateProcessorId() {
         try {
-            return InetAddress.getLocalHost().getHostName() + "-"
-                    + ProcessHandle.current().pid() + "-"
-                    + UUID.randomUUID().toString().substring(0, 8);
+            return String.join(
+                    "-",
+                    InetAddress.getLocalHost().getHostName(),
+                    String.valueOf(ProcessHandle.current().pid()),
+                    UUID.randomUUID().toString().substring(0, 8)
+            );
         } catch (Exception e) {
             return UUID.randomUUID().toString();
         }
@@ -79,7 +79,7 @@ public class MoveToHistoryBatchService implements SmartLifecycle {
         }
         log.info("히스토리 테일블로 이동처리 배치 시작, 프로세서 ID: {}", processorId);
         try {
-            int moveCnt = emailHistoryService.moveAllEmailsToHistoryByStatus(EmailQueue.EmailStatus.SENT);
+            int moveCnt = emailHistoryService.moveEmailsToHistoryByStatus(EmailQueue.EmailStatus.SENT);
             log.info("{}개의 이메일이 히스토리 테일블로 이동처리 되었습니다.", moveCnt);
         } catch (Exception e) {
             log.error("히스토리 테일블로 이동처리 배치 처리 중 오류 발생", e);

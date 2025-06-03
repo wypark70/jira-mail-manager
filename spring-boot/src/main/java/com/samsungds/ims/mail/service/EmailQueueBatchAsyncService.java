@@ -45,9 +45,12 @@ public class EmailQueueBatchAsyncService {
     // processorId 생성 방법
     private String generateProcessorId() {
         try {
-            return InetAddress.getLocalHost().getHostName() + "-"
-                    + ProcessHandle.current().pid() + "-"
-                    + UUID.randomUUID().toString().substring(0, 8);
+            return String.join(
+                    "-",
+                    InetAddress.getLocalHost().getHostName(),
+                    String.valueOf(ProcessHandle.current().pid()),
+                    UUID.randomUUID().toString().substring(0, 8)
+            );
         } catch (Exception e) {
             return UUID.randomUUID().toString();
         }
@@ -85,6 +88,6 @@ public class EmailQueueBatchAsyncService {
             );
         }
     }
-    @JsonIgnoreProperties({"content", "recipients"})
+    @JsonIgnoreProperties({"content", "recipients", "attachments"})
     static class EmailQueueMixin {}
 }

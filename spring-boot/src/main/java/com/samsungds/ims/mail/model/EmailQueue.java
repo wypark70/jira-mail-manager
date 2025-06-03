@@ -32,8 +32,8 @@ public class EmailQueue {
     @OneToMany(mappedBy = "emailQueue", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<EmailQueueRecipient> recipients;
 
-    // 첨부 파일 경로 (쉼표로 구분된 목록)
-    private String attachments;
+    @OneToMany(mappedBy = "emailQueue", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<EmailQueueAttachment> attachments;
 
     // 이메일 상태 관리
     @Enumerated(EnumType.STRING)

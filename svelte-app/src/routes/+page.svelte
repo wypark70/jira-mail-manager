@@ -4,7 +4,6 @@
     import EmailQueueStatistics from '$lib/components/EmailQueueStatistics.svelte';
     import EmailQueueActions from '$lib/components/EmailQueueActions.svelte';
     import MoveToHistoryBatchStatus from "$lib/components/MoveToHistoryBatchStatus.svelte";
-    import SendToSmtpRequestBatchStatus from "$lib/components/SendToSmtpRequestBatchStatus.svelte";
 
     // 대시보드에 필요한 데이터 (실제 데이터와 연동 필요)
     let stats = {
@@ -21,18 +20,13 @@
 </svelte:head>
 
 <div class="container mx-auto px-4 py-8">
-    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 dark:text-white mb-8">
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-1 dark:text-white mb-8">
         <!-- SMTP 서버 상태 -->
         <SmtpInterceptorServerStatus/>
         <!-- 매일 발송 배치 상태 -->
         <EmailQueueBatchStatus/>
-    </div>
-
-    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 dark:text-white mb-8">
         <!-- 히스토리 테이블 이동 배치 상태 -->
         <MoveToHistoryBatchStatus/>
-        <!-- SMTP 요청 보내기 배치 상태 -->
-        <SendToSmtpRequestBatchStatus/>
     </div>
 
     <!-- 통계 카드 -->

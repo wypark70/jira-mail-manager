@@ -30,6 +30,8 @@ dependencies {
     // unirest-java
     implementation 'com.mashape.unirest:unirest-java:1.4.9'
 
+    implementation 'org.jsoup:jsoup:1.20.1'
+
     // Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-data-rest'

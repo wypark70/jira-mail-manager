@@ -7,6 +7,7 @@ import com.samsungds.ims.mail.repository.EmailQueueRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.subethamail.smtp.MessageContext;
 import org.subethamail.smtp.MessageHandler;
@@ -28,9 +29,12 @@ public class SmtpMessageHandlerFactory implements MessageHandlerFactory {
     private final EmailQueueAttachmentRepository emailQueueAttachmentRepository;
     private final AllowDomainFilter allowDomainFilter;
 
+    @Value("${mail.attachment.storage.path:./attachments}")
+    private String attachmentStoragePath;
+
     @PostConstruct
     public void init() {
-        log.info("SMTP Interceptor Server 시작");
+        log.info("SmtpMessageHandlerFactory initialized. Attachment storage path: {}", attachmentStoragePath);
     }
 
     @Override
@@ -41,27 +45,25 @@ public class SmtpMessageHandlerFactory implements MessageHandlerFactory {
         // IP와 도메인 필터링 로직
         if (!isAllowedConnection(clientIp, domain)) {
             log.info("차단된 클라이언트 IP: {}, 도메인: {}", clientIp, domain);
-            throw new RuntimeException("허용되지 않은 클라이언트 IP 또는 도메인: " + clientIp + " (" + domain + ")");
+            throw new SecurityException("허용되지 않은 클라이언트 IP 또는 도메인으로부터의 연결 시도: " + clientIp + " (" + domain + ")");
         }
 
         // 연결이 허용된 경우 메시지 핸들러 반환
         log.info("허용된 클라이언트 IP: {}, 도메인: {}", clientIp, domain);
-        return new SmtpMessageHandler(emailQueueRepository, emailQueueRecipientRepository, emailQueueContentRepository, emailQueueAttachmentRepository, allowDomainFilter);
+        return new SmtpMessageHandler(emailQueueRepository, emailQueueRecipientRepository, emailQueueContentRepository, emailQueueAttachmentRepository, allowDomainFilter, attachmentStoragePath);
     }
 
     /**
      * SocketAddress에서 IP 주소를 추출하는 메서드
      */
-    public String getIpAddress(SocketAddress socketAddress) {
-        // InetSocketAddress로 캐스팅
+    private String getIpAddress(SocketAddress socketAddress) {
         if (socketAddress instanceof InetSocketAddress inetSocketAddress) {
-
-            // InetAddress 가져오기
-            return inetSocketAddress.getAddress().getHostAddress(); // IP 주소 반환
+            return inetSocketAddress.getAddress().getHostAddress();
         }
-
-        // 잘못된 타입일 경우 예외 처리
-        throw new IllegalArgumentException("InetSocketAddress가 아닌 SocketAddress 타입입니다.");
+        // 지원되지 않는 SocketAddress 타입인 경우, 로그를 남기고 예외 발생
+        String actualType = (socketAddress != null) ? socketAddress.getClass().getName() : "null";
+        log.warn("지원되지 않는 SocketAddress 타입입니다: {}", actualType);
+        throw new IllegalArgumentException("SocketAddress는 InetSocketAddress 타입이어야 합니다. 실제 타입: " + actualType);
     }
 
     /**
@@ -79,7 +81,7 @@ public class SmtpMessageHandlerFactory implements MessageHandlerFactory {
 
             return hostname;
         } catch (UnknownHostException e) {
-            log.info("도메인 조회 실패: {}", ipAddress);
+            log.warn("IP 주소 '{}'에 대한 도메인 조회 중 오류 발생: {}", ipAddress, e.getMessage());
             return "unknown";
         }
     }
