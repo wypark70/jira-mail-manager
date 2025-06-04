@@ -133,15 +133,6 @@
 
 <div class="grid grid-cols-1 gap-6 md:grid-cols-2 dark:text-white">
     <Card
-            class="rounded-lg p-6 shadow-md transition-shadow hover:shadow-lg"
-            href="/mail-queue"
-            size="xl"
-    >
-        <h3 class="mb-2 text-lg font-semibold">👉 메일 큐 관리</h3>
-        <p>메일 큐를 확인하고 관리합니다.</p>
-    </Card>
-
-    <Card
             class="rounded-lg p-6 shadow-md transition-shadow hover:shadow-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
             onclick={processEmailQueueBatch}
             size="xl"

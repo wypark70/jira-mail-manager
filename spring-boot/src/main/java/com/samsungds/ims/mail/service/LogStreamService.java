@@ -80,7 +80,6 @@ public class LogStreamService {
     public void addLog(LogMessage logMessage) {
         try {
             if (!hasActiveSubscribers()) {
-                log.debug("현재 활성 구독자가 없습니다.");
                 return;
             }
             Sinks.EmitResult result = logSink.tryEmitNext(logMessage);

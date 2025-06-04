@@ -21,7 +21,10 @@ import org.jsoup.nodes.Element;
 import org.subethamail.smtp.MessageHandler;
 
 import javax.mail.*;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import javax.mail.Message.RecipientType;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -29,11 +32,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Properties;
+import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Set;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 @RequiredArgsConstructor
 @Slf4j
 public class SmtpMessageHandler implements MessageHandler {
@@ -51,7 +56,7 @@ public class SmtpMessageHandler implements MessageHandler {
     private final String attachmentStoragePath;
 
     private String from;
-    private String to;
+    private List<String> toRecipients = new ArrayList<>();
 
 
     @Override
@@ -62,13 +67,14 @@ public class SmtpMessageHandler implements MessageHandler {
 
     @Override
     public void recipient(String recipient) {
-        this.to = recipient;
-        log.info("받는 사람 (To): {}", recipient);
+        this.toRecipients.add(recipient);
+        log.info("수신자 추가: {}, 현재 수신자 {}명", recipient, this.toRecipients.size());
     }
 
     @Override
     public void data(InputStream data) {
-        if (!validateEmailDomains(this.from, this.to)) {
+        if (!validateEmailDomains(this.from)) {
+            log.warn("허용되지 않는 이메일 도메인입니다. (발신자: {})", this.from);
             return;
         }
 
@@ -114,8 +120,25 @@ public class SmtpMessageHandler implements MessageHandler {
             // 6. 최종적으로 결정된 본문을 EmailQueueContent에 저장
             saveEmailContent(emailQueue, finalBodyToStore);
 
-            // 7. 수신자 정보 추가
-            addRecipientIfNotExists(this.to, emailQueue);
+            // 7. 수신자 정보 추가 (TO, CC, BCC 헤더 기반)
+            Address[] toHeaderRecipients = message.getRecipients(RecipientType.TO);
+            if (toHeaderRecipients != null) {
+                for (Address address : toHeaderRecipients) {
+                    addRecipientIfNotExists(address.toString(), emailQueue, EmailQueueRecipient.RecipientType.TO);
+                }
+            }
+            Address[] ccHeaderRecipients = message.getRecipients(RecipientType.CC);
+            if (ccHeaderRecipients != null) {
+                for (Address address : ccHeaderRecipients) {
+                    addRecipientIfNotExists(address.toString(), emailQueue, EmailQueueRecipient.RecipientType.CC);
+                }
+            }
+            Address[] bccHeaderRecipients = message.getRecipients(RecipientType.BCC);
+            if (bccHeaderRecipients != null) {
+                for (Address address : bccHeaderRecipients) {
+                    addRecipientIfNotExists(address.toString(), emailQueue, EmailQueueRecipient.RecipientType.BCC);
+                }
+            }
 
             // 8. CID로 처리되지 않은 나머지 첨부파일 저장
             saveOtherAttachments(message, emailQueue, cidToUrlMap.keySet());
@@ -133,13 +156,8 @@ public class SmtpMessageHandler implements MessageHandler {
         log.info("SMTP 요청 처리가 완료되었습니다.");
     }
 
-    private boolean validateEmailDomains(String fromAddress, String toAddress) {
-        if (!allowDomainFilter.isAllowedEmailDomain(fromAddress)) {
-            log.warn("허용되지 않는 발신자 이메일 도메인입니다. (From: {})", fromAddress);
-            return false;
-        }
-        if (!allowDomainFilter.isAllowedEmailDomain(toAddress)) {
-            log.warn("허용되지 않는 수신자 이메일 도메인입니다. (To: {})", toAddress);
+    private boolean validateEmailDomains(String emailAddress) {
+        if (!allowDomainFilter.isAllowedEmailDomain(emailAddress)) {
             return false;
         }
         return true;
@@ -173,16 +191,32 @@ public class SmtpMessageHandler implements MessageHandler {
         emailQueueContentRepository.save(content);
     }
 
-    private void addRecipientIfNotExists(String recipientEmail, EmailQueue emailQueue) {
+    private String extractEmailAddress(String fullAddress) {
+        try {
+            InternetAddress internetAddress = new InternetAddress(fullAddress);
+            return internetAddress.getAddress();
+        } catch (AddressException e) {
+            log.warn("잘못된 형식의 이메일 주소입니다: {}. 원본 주소를 사용합니다.", fullAddress);
+            return fullAddress; // 파싱 실패 시 원본 반환
+        }
+    }
+
+    private void addRecipientIfNotExists(String fullRecipientAddress, EmailQueue emailQueue, EmailQueueRecipient.RecipientType type) {
+        String recipientEmail = extractEmailAddress(fullRecipientAddress);
+        if (!validateEmailDomains(this.from)) {
+            log.warn("허용되지 않는 이메일 도메인입니다. (수신자: {})", recipientEmail);
+            return;
+        }
+
         if (!emailQueueRecipientRepository.existsByEmailAndEmailQueue(recipientEmail, emailQueue)) {
             EmailQueueRecipient recipient = new EmailQueueRecipient();
             recipient.setEmail(recipientEmail);
-            recipient.setType(EmailQueueRecipient.RecipientType.TO);
+            recipient.setType(type);
             recipient.setEmailQueue(emailQueue);
             emailQueueRecipientRepository.save(recipient);
-            log.info("새로운 수신자 추가: {} (큐 ID: {}, 제목: {})", recipientEmail, emailQueue.getId(), emailQueue.getSubject());
+            log.info("새로운 {} 수신자 추가: {} (큐 ID: {}, 제목: {})", type, recipientEmail, emailQueue.getId(), emailQueue.getSubject());
         } else {
-            log.info("이미 존재하는 수신자: {} (큐 ID: {}, 제목: {})", recipientEmail, emailQueue.getId(), emailQueue.getSubject());
+            log.info("이미 존재하는 {} 수신자: {} (큐 ID: {}, 제목: {})", type, recipientEmail, emailQueue.getId(), emailQueue.getSubject());
         }
     }
 

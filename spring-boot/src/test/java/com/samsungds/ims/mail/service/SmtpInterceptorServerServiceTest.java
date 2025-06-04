@@ -1,5 +1,7 @@
 package com.samsungds.ims.mail.service;
 
+import lombok.AllArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +13,8 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 
@@ -19,21 +23,24 @@ class SmtpInterceptorServerServiceTest {
     private static final String SMTP_HOST = "localhost";
     private static final int SMTP_PORT = 25;
     private final Random random = new Random();
-    private final boolean running = false;
 
     @Test
-    public void processSendToSmtpRequest() {
+    public void testSendToSmtpRequest() {
         try {
             // 10 ~ 50개의 메일을 발송
             int randomNumber = random.nextInt(31) + 20;
             for (int i = 0; i < randomNumber; i++) {
                 String from = getRandomSender();
-                String to = getRandomRecipient();
+                List<Recipient> recipients = new ArrayList<>();
+                recipients.add(new Recipient(Message.RecipientType.TO, getRandomRecipient()));
+                for (int j = 0; j < random.nextInt(10) + 1; j++) {
+                    recipients.add(new Recipient(getRandomRecipientType(), getRandomRecipient()));
+                }
                 String subject = getRandomSubject();
-                String body = "<h4>이메일 보내기 테스트입니다.</h4>\n<p>from: " + from + "</p>\n<p>to: " + to + "</p>\n<p>subject: " + subject + "</p>\n";
+                String body = "<h4>이메일 보내기 테스트입니다.</h4>\n<p>from: " + from + "</p>\n<p>to: " + recipients + "</p>\n<p>subject: " + subject + "</p>\n";
                 String userName = from.split("@")[0];
                 String userLink = "<a class=\"user-hover\" rel=\"" + userName + "\" href=\"https://www.google.com/search?q=" + userName + "\">" + userName + "</a>";
-                sendTestEmail(from, to, subject, body + "\n" + userLink);
+                sendTestEmail(from, recipients, subject, body + "\n" + userLink);
             }
             log.info("SMTP 요청 보내기 배치 처리 완료");
         } catch (Exception e) {
@@ -41,7 +48,7 @@ class SmtpInterceptorServerServiceTest {
         }
     }
 
-    private void sendTestEmail(String from, String to, String subject, String body)
+    private void sendTestEmail(String from, List<Recipient> recipients, String subject, String body)
             throws MessagingException, InterruptedException {
         // SMTP 설정
         Properties props = new Properties();
@@ -57,7 +64,13 @@ class SmtpInterceptorServerServiceTest {
         // 메시지 생성
         MimeMessage message = new MimeMessage(session);
         message.setFrom(new InternetAddress(from));
-        message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
+        recipients.forEach(recipient -> {
+            try {
+                message.addRecipients(recipient.type, InternetAddress.parse(recipient.address));
+            } catch (MessagingException e) {
+                throw new RuntimeException(e);
+            }
+        });
         message.setSubject(subject);
         message.setText(body);
 
@@ -171,6 +184,15 @@ class SmtpInterceptorServerServiceTest {
         return ids[random.nextInt(ids.length)] + "@" + getRandomDomain();
     }
 
+    private Message.RecipientType getRandomRecipientType() {
+        Message.RecipientType[] types = {
+                Message.RecipientType.TO,
+                Message.RecipientType.CC,
+                Message.RecipientType.BCC
+        };
+        return types[random.nextInt(types.length)];
+    }
+
     private String getRandomRecipient() {
         String[] ids = {
                 // 개발팀
@@ -245,5 +267,12 @@ class SmtpInterceptorServerServiceTest {
         };
 
         return ids[random.nextInt(ids.length)] + "@" + getRandomDomain();
+    }
+
+    @AllArgsConstructor
+    @ToString
+    static class Recipient {
+        Message.RecipientType type;
+        String address;
     }
 }

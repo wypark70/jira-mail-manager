@@ -87,7 +87,7 @@ tasks.register('copyFrontendBuildFiles', Copy) {
 tasks.named('processResources') {
     // 테스트 실행이 아닌 경우에만 프론트엔드 빌드에 의존
     if (!gradle.startParameter.taskNames.any { it.toLowerCase().contains('test') }) {
-        // dependsOn 'copyFrontendBuildFiles'
+        dependsOn 'copyFrontendBuildFiles'
     }
 }
 
