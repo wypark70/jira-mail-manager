@@ -394,7 +394,7 @@ public class SmtpMessageHandler implements MessageHandler {
 
     private String getSenderFromBody(String body) {
         Document document = Jsoup.parse(body);
-        Element element = document.selectFirst("a.user-hover");
+        Element element = document.selectFirst("#header-avatar-image-container a.user-hover");
         if (element != null) {
             String userName = element.attr("rel");
             return getSenderEmailByUserName(userName);
