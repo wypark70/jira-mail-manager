@@ -23,6 +23,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .headers(headers -> headers
+                        .frameOptions(frameOptions -> frameOptions.sameOrigin())
+                )
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/login", "/register").permitAll()
                         .requestMatchers("/**").hasAnyRole("ADMIN", "USER")

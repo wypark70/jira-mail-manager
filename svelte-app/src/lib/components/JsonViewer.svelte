@@ -108,7 +108,7 @@
         </div>
     </div>
 
-    <div class="overflow-auto p-4 font-mono text-sm relative max-h-[600px]">
+    <div class="overflow-auto p-4 font-mono text-sm relative max-h-[500px]">
         <pre class="whitespace-pre leading-6"><code>{#if showLineNumbers}<div class="table w-full">{#each lines as line, i}<div class="table-row hover:bg-gray-50 dark:hover:bg-gray-900"><div class="table-cell text-gray-400 dark:text-gray-600 w-10 pr-4 text-right select-none font-normal">{i + 1}</div><div class="table-cell">{@html syntaxHighlight(line)}</div></div>{/each}</div>{:else}{@html syntaxHighlight(formattedJson)}{/if}</code></pre>
     </div>
 </div>
@@ -127,8 +127,8 @@
     }
 
     .overflow-auto::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+        width: 10px;
+        height: 10px;
     }
 
     .overflow-auto::-webkit-scrollbar-track {

@@ -36,6 +36,8 @@ public interface EmailQueueRepository extends JpaRepository<EmailQueue, Long> {
 
     Optional<EmailQueue> findBySenderAndSubject(String sender, String subject);
 
+    Optional<EmailQueue> findByUniqueId(String uniqueId);
+
     @Query("SELECT e.status, COUNT(e) FROM EmailQueue e GROUP BY e.status")
     List<Object[]> countAllByStatus();
 

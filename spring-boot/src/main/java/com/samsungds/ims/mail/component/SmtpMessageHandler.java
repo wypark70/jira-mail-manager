@@ -12,6 +12,7 @@ import com.samsungds.ims.mail.repository.EmailQueueAttachmentRepository;
 import com.samsungds.ims.mail.repository.EmailQueueContentRepository;
 import com.samsungds.ims.mail.repository.EmailQueueRecipientRepository;
 import com.samsungds.ims.mail.repository.EmailQueueRepository;
+import com.samsungds.ims.mail.util.EmailHashGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
@@ -101,7 +102,7 @@ public class SmtpMessageHandler implements MessageHandler {
             }
 
             // 4. EmailQueue 엔티티 생성 또는 조회 (본문 내용 없이)
-            EmailQueue emailQueue = findOrCreateEmailQueueStub(effectiveSender, subject);
+            EmailQueue emailQueue = findOrCreateEmailQueueStub(effectiveSender, subject, EmailHashGenerator.generateSha256Hash(bodyForSenderDetection));
 
             // 5. CID 이미지 처리 및 HTML 본문 업데이트
             String finalBodyToStore;
@@ -170,13 +171,14 @@ public class SmtpMessageHandler implements MessageHandler {
     }
 
     // EmailQueue 엔티티만 생성/조회 (Content 제외)
-    private EmailQueue findOrCreateEmailQueueStub(String sender, String subject) {
-        return emailQueueRepository.findBySenderAndSubject(sender, subject)
+    private EmailQueue findOrCreateEmailQueueStub(String sender, String subject, String hash) {
+        return emailQueueRepository.findByUniqueId(hash)
                 .orElseGet(() -> {
                     EmailQueue newQueue = new EmailQueue();
                     newQueue.setSender(sender);
                     newQueue.setSubject(subject);
                     newQueue.setStatus(EmailQueue.EmailStatus.QUEUED);
+                    newQueue.setUniqueId(hash);
                     EmailQueue savedQueue = emailQueueRepository.save(newQueue);
                     log.info("새로운 메일 큐 생성됨 (ID: {}, 발신자: {}, 제목: {})", savedQueue.getId(), sender, subject);
                     return savedQueue;

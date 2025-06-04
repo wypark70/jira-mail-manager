@@ -159,7 +159,6 @@
         const response = await fetch(`${springApiBaseUrl}/email-history/${id}`);
         if (response.ok) {
             selectedMail = await response.json();
-            if (selectedMail) selectedMail.content.body = escapeHTML(selectedMail.content.body);
             showModal = true;
         } else {
             console.error('메일 상세 정보 로딩 실패:', await response.json());
@@ -175,6 +174,16 @@
         const tempElement = document.createElement('div');
         tempElement.textContent = str;
         return tempElement.innerHTML;
+    }
+
+    function escapeContent(emailQue:EmailHistory): EmailHistory {
+        return {
+            ...emailQue,
+            content: {
+                ...emailQue.content,
+                body: escapeHTML(emailQue.content.body)
+            }
+        };
     }
 
     // 초기 데이터 로드
@@ -402,52 +411,19 @@
     {#if selectedMail}
         <div class="p-4">
             <h2 class="mb-4 text-2xl font-bold">메일 히스토리 상세 정보</h2>
-
-            <div class="grid gap-4">
-                <div class="grid grid-cols-3 gap-4 border-b pb-2">
-                    <div class="font-semibold">ID</div>
-                    <div class="col-span-2">{selectedMail.id}</div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-4 border-b pb-2">
-                    <div class="font-semibold">제목</div>
-                    <div class="col-span-2">{selectedMail.subject}</div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-4 border-b pb-2">
-                    <div class="font-semibold">보낸 사람</div>
-                    <div class="col-span-2">{selectedMail.sender}</div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-4 border-b pb-2">
-                    <div class="font-semibold">처리자 ID</div>
-                    <div class="col-span-2">{selectedMail.processorId}</div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-4 border-b pb-2">
-                    <div class="font-semibold">재시도 횟수</div>
-                    <div class="col-span-2">{selectedMail.retryCount}</div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-4 border-b pb-2">
-                    <div class="font-semibold">발송 시간</div>
-                    <div class="col-span-2">{new Date(selectedMail.sentAt).toLocaleString()}</div>
-                </div>
-
-                {#if selectedMail.errorMessage}
-                    <div class="grid grid-cols-3 gap-4 border-b pb-2">
-                        <div class="font-semibold">오류 메시지</div>
-                        <div class="col-span-2 text-red-600">{selectedMail.errorMessage}</div>
-                    </div>
-                {/if}
+            <div class="mt-4">
+                <JsonViewer json={escapeContent(selectedMail)} />
             </div>
-
-            <JsonViewer json={selectedMail}/>
-
-            <div class="mt-4 flex justify-end gap-2">
-                <Button color="alternative" onclick={() => showModal = false}>
-                    닫기
-                </Button>
+            <div class="mt-4">
+                {#if selectedMail.content && selectedMail.content.body}
+                    <iframe
+                            srcdoc={selectedMail.content.body}
+                            class="w-full h-64 bg-white rounded-lg shadow-lg border border-gray-200 dark:border-gray-700"
+                            title="Email Body Preview"
+                    ></iframe>
+                {:else}
+                    <p class="text-gray-500 dark:text-gray-400">메일 본문이 없습니다.</p>
+                {/if}
             </div>
         </div>
     {/if}
