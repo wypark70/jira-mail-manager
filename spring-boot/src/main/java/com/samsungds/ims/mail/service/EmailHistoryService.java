@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,6 +46,10 @@ public class EmailHistoryService {
                     history.setErrorMessage(queue.getErrorMessage());
                     history.setRetryCount(queue.getRetryCount());
                     history.setSentAt(queue.getSentAt());
+                    history.setProcessorId(queue.getProcessorId());
+                    history.setUniqueId(queue.getUniqueId());
+                    history.setTags(queue.getTags());
+                    history.setSource(queue.getSource());
                     return history;
                 })
                 .collect(Collectors.toList());
@@ -115,6 +118,7 @@ public class EmailHistoryService {
         long historyCount = emailHistoryRepository.count();
         emailHistoryContentRepository.deleteAll();
         emailHistoryRecipientRepository.deleteAll();
+        emailHistoryAttachmentRepository.deleteAll();
         emailHistoryRepository.deleteAll();
         return historyCount;
     }

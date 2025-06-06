@@ -1,7 +1,6 @@
 package com.samsungds.ims.mail.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -40,6 +39,10 @@ public class EmailHistory {
     private String processorId;    // 처리한 프로세서 ID
     private String errorMessage;   // 오류 메시지
     private int retryCount;        // 재시도 횟수
+
+    private String uniqueId;
+    private String tags;
+    private String source;
     
     @Enumerated(EnumType.STRING)
     private EmailQueue.EmailStatus status;  // 최종 상태

@@ -22,24 +22,17 @@ import org.jsoup.nodes.Element;
 import org.subethamail.smtp.MessageHandler;
 
 import javax.mail.*;
+import javax.mail.Message.RecipientType;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import javax.mail.Message.RecipientType;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Properties;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 @RequiredArgsConstructor
 @Slf4j
 public class SmtpMessageHandler implements MessageHandler {

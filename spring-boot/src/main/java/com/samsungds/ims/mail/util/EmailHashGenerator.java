@@ -3,7 +3,7 @@ package com.samsungds.ims.mail.util;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat; // Java 17 이상에서 사용 가능
+import java.util.HexFormat;
 
 public class EmailHashGenerator {
 

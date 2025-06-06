@@ -4,9 +4,9 @@ import com.samsungds.ims.mail.model.AppRole;
 import com.samsungds.ims.mail.model.AppUser;
 import com.samsungds.ims.mail.repository.AppRoleRepository;
 import com.samsungds.ims.mail.repository.AppUserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import lombok.RequiredArgsConstructor;
 
 import java.util.HashSet;
 import java.util.Optional;

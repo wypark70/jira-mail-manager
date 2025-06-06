@@ -1,12 +1,10 @@
 package com.samsungds.ims.mail.repository;
 
-import java.util.Collection;
-import java.util.List;
-
-import com.samsungds.ims.mail.model.EmailQueueRecipient;
+import com.samsungds.ims.mail.model.EmailQueueAttachment;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.samsungds.ims.mail.model.EmailQueueAttachment;
+import java.util.Collection;
+import java.util.List;
 
 public interface EmailQueueAttachmentRepository extends JpaRepository<EmailQueueAttachment, Long> {
     List<EmailQueueAttachment> findByEmailQueueId(Long emailQueueId);

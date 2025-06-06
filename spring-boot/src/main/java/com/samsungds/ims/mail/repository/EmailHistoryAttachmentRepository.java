@@ -1,7 +1,6 @@
 package com.samsungds.ims.mail.repository;
 
 import com.samsungds.ims.mail.model.EmailHistoryAttachment;
-import com.samsungds.ims.mail.model.EmailQueueAttachment;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Collection;

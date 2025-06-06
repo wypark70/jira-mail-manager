@@ -468,7 +468,7 @@
                 {#if selectedMail.content && selectedMail.content.body}
                     <iframe
                             srcdoc={selectedMail.content.body}
-                            class="w-full h-64 bg-white rounded-lg shadow-lg border border-gray-200 dark:border-gray-700"
+                            class="w-full h-96 bg-white rounded-lg shadow-lg border border-gray-200 dark:border-gray-700"
                             title="Email Body Preview"
                     ></iframe>
                 {:else}
