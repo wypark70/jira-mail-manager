@@ -15,6 +15,9 @@
     <div class="grid grid-cols-1 gap-6 md:grid-cols-1 dark:text-white mb-8">
         <!-- SMTP 서버 상태 -->
         <SmtpInterceptorServerStatus/>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 dark:text-white mb-8">
         <!-- 매일 발송 배치 상태 -->
         <EmailQueueBatchStatus/>
         <!-- 히스토리 테이블 이동 배치 상태 -->

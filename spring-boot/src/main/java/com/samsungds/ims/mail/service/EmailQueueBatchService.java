@@ -1,12 +1,15 @@
 package com.samsungds.ims.mail.service;
 
+import com.samsungds.ims.mail.component.MailBatchProperties;
 import com.samsungds.ims.mail.dto.ProcessorStatus;
 import com.samsungds.ims.mail.model.EmailQueue;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.SmartLifecycle;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
 
 import java.net.InetAddress;
@@ -18,17 +21,14 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class EmailQueueBatchService implements SmartLifecycle {
+@EnableScheduling
+public class EmailQueueBatchService implements SmartLifecycle, SchedulingConfigurer {
 
     private final EmailQueueBatchAsyncService emailQueueBatchAsyncService;
     private final EmailQueueService emailQueueService;
     private final String processorId = generateProcessorId();
+    private final MailBatchProperties mailBatchProperties;
     private volatile boolean running = false;
-    @Value("${mail.batch.batch-size:10}")
-    private int batchSize;
-
-    @Value("${mail.batch.concurrent-batch-size:5}")
-    private int concurrentBatchSize;
 
     // processorId 생성 방법
     private String generateProcessorId() {
@@ -78,10 +78,20 @@ public class EmailQueueBatchService implements SmartLifecycle {
         return 0;
     }
 
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
+        taskRegistrar.addTriggerTask(
+                this::processEmailQueue,
+                triggerContext -> {
+                    CronTrigger cronTrigger = new CronTrigger(mailBatchProperties.getQueueProcessingCron());
+                    return cronTrigger.nextExecution(triggerContext);
+                }
+        );
+    }
+
     /**
      * 대기 중인 이메일 처리 (20초마다 실행)
      */
-    @Scheduled(cron = "*/20 * * * * *")
     public void processEmailQueue() {
         if (!running) {
             log.debug("이메일 큐 프로세서가 실행 중이 아닙니다.");
@@ -89,6 +99,10 @@ public class EmailQueueBatchService implements SmartLifecycle {
         }
 
         log.info("이메일 큐 처리 시작, 프로세서 ID: {}", processorId);
+        processEmailQueueInternal();
+    }
+
+    private void processEmailQueueInternal() {
 
         try {
             // 타임아웃된 이메일 잠금 해제 (장애 복구)
@@ -115,6 +129,8 @@ public class EmailQueueBatchService implements SmartLifecycle {
     private void processQueuedEmails() {
         List<EmailQueue> allProcessedEmails = new ArrayList<>();
         int totalEmailsProcessed = 0;
+        int batchSize = mailBatchProperties.getBatchSize();
+        int concurrentBatchSize = mailBatchProperties.getConcurrentBatchSize();
 
         for (int batch = 0; batch < batchSize && totalEmailsProcessed < batchSize; batch += concurrentBatchSize) {
             List<EmailQueue> emailsToProcess = emailQueueService.fetchEmailsForProcessing(concurrentBatchSize);

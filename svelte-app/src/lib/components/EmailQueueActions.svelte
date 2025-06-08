@@ -5,26 +5,6 @@
 
     const springApiBaseUrl = import.meta.env.VITE_SPRING_API_BASE_URL;
 
-    function processEmailQueueBatch() {
-        showConfirm(
-            '배치 실행',
-            '메일 보내는 배치 프로그램을 실행하시겠습니까?',
-            handleProcessEmailQueueBatch
-        );
-    }
-
-    async function handleProcessEmailQueueBatch() {
-        try {
-            const response = await fetch(`${springApiBaseUrl}/email-queue-batch/process`, {
-                method: 'POST'
-            });
-            const { message } = await response.json();
-            alertService.success(message);
-        } catch (error) {
-            console.error('배치 프로그램 오류:', error);
-        }
-    }
-
     function retryFailedEmail() {
         showConfirm(
             '재시도 상태로 변경',
@@ -132,15 +112,6 @@
 />
 
 <div class="grid grid-cols-1 gap-6 md:grid-cols-2 dark:text-white">
-    <Card
-            class="rounded-lg p-6 shadow-md transition-shadow hover:shadow-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
-            onclick={processEmailQueueBatch}
-            size="xl"
-    >
-        <h3 class="mb-2 text-lg font-semibold">👉 배치 실행</h3>
-        <p>메일 보내는 배치 프로그램을 실행합니다.</p>
-    </Card>
-
     <Card
             class="rounded-lg p-6 shadow-md transition-shadow hover:shadow-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
             onclick={retryFailedEmail}

@@ -1,13 +1,3 @@
-# jira-mail-manager
-
-## 참고 사이트
-- https://next.shadcn-svelte.com/docs/installation/sveltekit
-
-## 터미널에서 한글 깨짐 방짐
-```shell
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::InputEncoding = [System.Text.Encoding]::UTF8; chcp EUC-KR
-```
-
 # PowerShell 프로필에 한글 인코딩(UTF-8) 설정 추가 방법
 
 ## 1. PowerShell 프로필 파일 위치 확인

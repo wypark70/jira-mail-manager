@@ -27,9 +27,9 @@ public class SmtpMessageHandlerFactory implements MessageHandlerFactory {
     private final EmailQueueRecipientRepository emailQueueRecipientRepository;
     private final EmailQueueContentRepository emailQueueContentRepository;
     private final EmailQueueAttachmentRepository emailQueueAttachmentRepository;
-    private final AllowDomainFilter allowDomainFilter;
+    private final MailSmtpProperties mailSmtpProperties;
 
-    @Value("${mail.attachment.storage.path:./attachments}")
+    @Value("${mail.smtp.attachment-path:./attachments}")
     private String attachmentStoragePath;
 
     @PostConstruct
@@ -50,7 +50,7 @@ public class SmtpMessageHandlerFactory implements MessageHandlerFactory {
 
         // 연결이 허용된 경우 메시지 핸들러 반환
         log.info("허용된 클라이언트 IP: {}, 도메인: {}", clientIp, domain);
-        return new SmtpMessageHandler(emailQueueRepository, emailQueueRecipientRepository, emailQueueContentRepository, emailQueueAttachmentRepository, allowDomainFilter, attachmentStoragePath);
+        return new SmtpMessageHandler(emailQueueRepository, emailQueueRecipientRepository, emailQueueContentRepository, emailQueueAttachmentRepository, mailSmtpProperties);
     }
 
     /**
@@ -90,6 +90,6 @@ public class SmtpMessageHandlerFactory implements MessageHandlerFactory {
      * IP 또는 도메인이 허용되었는지 확인
      */
     private boolean isAllowedConnection(String clientIp, String domain) {
-        return allowDomainFilter.isAllowedIp(clientIp) || allowDomainFilter.isAllowedDomain(domain);
+        return mailSmtpProperties.isAllowedIp(clientIp) || mailSmtpProperties.isAllowedDomain(domain);
     }
 }

@@ -48,19 +48,22 @@ spring:
 # SMTP 접근 제어 설정 추가
 mail:
   smtp:
-    allowed.ips: 127.0.0.1,12.127.176.145
-    allowed.domains: localhost,jira.samsungds.net
-    allowed.email-domain: samsung.com,partner.samsung.com,partner.sec.co.kr
+    allowed-ips: 127.0.0.1,12.127.176.145
+    allowed-domains: localhost,jira.samsungds.net
+    allowed-email-domain: samsung.com,partner.samsung.com,partner.sec.co.kr
+    attachment-path: ./attachments
   batch:
     batch-size: 10
     concurrent-batch-size: 5
     lock-timeout-minutes: 1
     retry-delay-minutes: 1
+    queue-processing-cron: "*/20 * * * * *"
+    move-to-history-cron: "0 */20 * * * *"
 
 logging:
   level:
     jdbc:
-      sqlonly: INFO
+      sqlonly: OFF
       sqltiming: OFF
       resultsettable: OFF
       audit: OFF
@@ -68,3 +71,9 @@ logging:
       connection: OFF
 
 debug: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,refresh"

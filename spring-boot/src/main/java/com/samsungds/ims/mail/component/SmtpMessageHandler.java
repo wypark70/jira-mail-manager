@@ -1,9 +1,5 @@
 package com.samsungds.ims.mail.component;
 
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.JsonNode;
-import com.mashape.unirest.http.Unirest;
-import com.mashape.unirest.http.exceptions.UnirestException;
 import com.samsungds.ims.mail.model.EmailQueue;
 import com.samsungds.ims.mail.model.EmailQueueAttachment;
 import com.samsungds.ims.mail.model.EmailQueueContent;
@@ -13,9 +9,13 @@ import com.samsungds.ims.mail.repository.EmailQueueContentRepository;
 import com.samsungds.ims.mail.repository.EmailQueueRecipientRepository;
 import com.samsungds.ims.mail.repository.EmailQueueRepository;
 import com.samsungds.ims.mail.util.EmailHashGenerator;
+import kong.unirest.HttpResponse;
+import kong.unirest.JsonNode;
+import kong.unirest.Unirest;
+import kong.unirest.UnirestException;
+import kong.unirest.json.JSONArray;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONArray;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -33,6 +33,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+
 @RequiredArgsConstructor
 @Slf4j
 public class SmtpMessageHandler implements MessageHandler {
@@ -46,11 +47,10 @@ public class SmtpMessageHandler implements MessageHandler {
     private final EmailQueueRecipientRepository emailQueueRecipientRepository;
     private final EmailQueueContentRepository emailQueueContentRepository;
     private final EmailQueueAttachmentRepository emailAttachmentRepository;
-    private final AllowDomainFilter allowDomainFilter;
-    private final String attachmentStoragePath;
+    private final MailSmtpProperties mailSmtpProperties;
 
     private String from;
-    private List<String> toRecipients = new ArrayList<>();
+    private final List<String> toRecipients = new ArrayList<>();
 
 
     @Override
@@ -67,7 +67,7 @@ public class SmtpMessageHandler implements MessageHandler {
 
     @Override
     public void data(InputStream data) {
-        if (!validateEmailDomains(this.from)) {
+        if (!mailSmtpProperties.isAllowedEmailDomain(this.from)) {
             log.warn("허용되지 않는 이메일 도메인입니다. (발신자: {})", this.from);
             return;
         }
@@ -150,13 +150,6 @@ public class SmtpMessageHandler implements MessageHandler {
         log.info("SMTP 요청 처리가 완료되었습니다.");
     }
 
-    private boolean validateEmailDomains(String emailAddress) {
-        if (!allowDomainFilter.isAllowedEmailDomain(emailAddress)) {
-            return false;
-        }
-        return true;
-    }
-
     private MimeMessage parseMimeMessage(InputStream data) throws MessagingException {
         Properties props = new Properties();
         Session session = Session.getDefaultInstance(props, null);
@@ -198,7 +191,7 @@ public class SmtpMessageHandler implements MessageHandler {
 
     private void addRecipientIfNotExists(String fullRecipientAddress, EmailQueue emailQueue, EmailQueueRecipient.RecipientType type) {
         String recipientEmail = extractEmailAddress(fullRecipientAddress);
-        if (!validateEmailDomains(this.from)) {
+        if (!mailSmtpProperties.isAllowedEmailDomain(recipientEmail)) {
             log.warn("허용되지 않는 이메일 도메인입니다. (수신자: {})", recipientEmail);
             return;
         }
@@ -341,42 +334,42 @@ public class SmtpMessageHandler implements MessageHandler {
 
             // 실제 첨부파일인 경우에만 저장 (예: Content-Disposition: attachment)
             if (isActualAttachment(part)) {
-            String originalFileName = part.getFileName();
-            String contentType = part.getContentType();
+                String originalFileName = part.getFileName();
+                String contentType = part.getContentType();
 
-            if (originalFileName == null || originalFileName.trim().isEmpty()) {
-                log.warn("첨부파일 이름이 없습니다. Content-Type: {}", contentType);
-                return;
-            }
+                if (originalFileName == null || originalFileName.trim().isEmpty()) {
+                    log.warn("첨부파일 이름이 없습니다. Content-Type: {}", contentType);
+                    return;
+                }
 
-            // 파일명 정제 (보안 및 경로 문제 방지)
-            String sanitizedFileName = sanitizeFileName(originalFileName);
+                // 파일명 정제 (보안 및 경로 문제 방지)
+                String sanitizedFileName = sanitizeFileName(originalFileName);
 
-            // 저장 경로 생성 (emailQueue ID별로 하위 디렉토리 사용)
-            Path directoryPath = Paths.get(attachmentStoragePath, String.valueOf(emailQueue.getId()));
-            Files.createDirectories(directoryPath); // 디렉토리가 없으면 생성
+                // 저장 경로 생성 (emailQueue ID별로 하위 디렉토리 사용)
+                Path directoryPath = Paths.get(mailSmtpProperties.getAttachmentPath(), String.valueOf(emailQueue.getId()));
+                Files.createDirectories(directoryPath); // 디렉토리가 없으면 생성
 
-            Path filePath = directoryPath.resolve(sanitizedFileName);
+                Path filePath = directoryPath.resolve(sanitizedFileName);
 
-            try (InputStream inputStream = part.getInputStream()) {
-                Files.copy(inputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
+                try (InputStream inputStream = part.getInputStream()) {
+                    Files.copy(inputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
 
-                EmailQueueAttachment attachment = new EmailQueueAttachment();
-                attachment.setEmailQueue(emailQueue);
-                attachment.setFileName(originalFileName); // 원본 파일명 저장
-                attachment.setContentType(contentType);
-                attachment.setFilePath(filePath.toAbsolutePath().toString());
-                emailAttachmentRepository.save(attachment);
+                    EmailQueueAttachment attachment = new EmailQueueAttachment();
+                    attachment.setEmailQueue(emailQueue);
+                    attachment.setFileName(originalFileName); // 원본 파일명 저장
+                    attachment.setContentType(contentType);
+                    attachment.setFilePath(filePath.toAbsolutePath().toString());
+                    emailAttachmentRepository.save(attachment);
 
                     log.info("일반 첨부파일 저장 완료: {} (큐 ID: {}, 경로: {})", originalFileName, emailQueue.getId(), filePath.toAbsolutePath());
-            } catch (IOException e) {
+                } catch (IOException e) {
                     log.error("일반 첨부파일 '{}' 저장 중 IO 오류 발생 (큐 ID: {})", originalFileName, emailQueue.getId(), e);
-                throw e;
-            } catch (Exception e) {
+                    throw e;
+                } catch (Exception e) {
                     log.error("일반 첨부파일 '{}' 처리 중 예기치 않은 오류 발생 (큐 ID: {})", originalFileName, emailQueue.getId(), e);
                     throw new MessagingException("일반 첨부파일 처리 중 오류: " + originalFileName, e);
+                }
             }
-        }
         }
     }
 
@@ -387,7 +380,7 @@ public class SmtpMessageHandler implements MessageHandler {
 
     private String getSenderFromBody(String body) {
         Document document = Jsoup.parse(body);
-        Element element = document.selectFirst("#header-avatar-image-container a.user-hover");
+        Element element = document.selectFirst("#header-pattern a.user-hover");
         if (element != null) {
             String userName = element.attr("rel");
             return getSenderEmailByUserName(userName);
@@ -403,7 +396,7 @@ public class SmtpMessageHandler implements MessageHandler {
                     .asJson();
             if (response.getStatus() != 200) return null;
             JSONArray users = response.getBody().getArray();
-            return users.length() > 0 ? users.getJSONObject(0).getString("emailAddress") : null;
+            return users.isEmpty() ? null: users.getJSONObject(0).getString("emailAddress");
         } catch (UnirestException e) {
             return null;
         }

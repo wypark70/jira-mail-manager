@@ -151,7 +151,7 @@
             </div>
         </div>
 
-        <div class="flex space-x-3">
+        <div class="flex space-x-3 whitespace-nowrap">
             <Button
                     color="green"
                     disabled={processorStatus.running}
@@ -171,6 +171,7 @@
                     color="orange"
                     disabled={!processorStatus.running}
                     onclick={stopProcessor}
+                    class="whitespace-nowrap"
             >
                 <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"
