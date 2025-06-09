@@ -26,8 +26,8 @@ public class EmailQueueBatchService implements SmartLifecycle, SchedulingConfigu
 
     private final EmailQueueBatchAsyncService emailQueueBatchAsyncService;
     private final EmailQueueService emailQueueService;
-    private final String processorId = generateProcessorId();
     private final SendMailBatchProperties sendMailBatchProperties;
+    private final String batchServiceProcessorId = generateProcessorId();
     private volatile boolean running = false;
 
     // processorId 생성 방법
@@ -47,13 +47,13 @@ public class EmailQueueBatchService implements SmartLifecycle, SchedulingConfigu
     // SmartLifecycle 구현
     @Override
     public void start() {
-        log.info("이메일 큐 프로세서 시작 - 프로세서 ID: {}", processorId);
+        log.info("이메일 큐 프로세서 시작 - 프로세서 ID: {}", batchServiceProcessorId);
         running = true;
     }
 
     @Override
     public void stop() {
-        log.info("이메일 큐 프로세서 종료 - 프로세서 ID: {}", processorId);
+        log.info("이메일 큐 프로세서 종료 - 프로세서 ID: {}", batchServiceProcessorId);
         running = false;
     }
 
@@ -98,7 +98,7 @@ public class EmailQueueBatchService implements SmartLifecycle, SchedulingConfigu
             return;
         }
 
-        log.info("이메일 큐 처리 시작, 프로세서 ID: {}", processorId);
+        log.info("이메일 큐 처리 시작, 프로세서 ID: {}", batchServiceProcessorId);
         processEmailQueueInternal();
     }
 
@@ -242,7 +242,7 @@ public class EmailQueueBatchService implements SmartLifecycle, SchedulingConfigu
 
         for (EmailQueue email : emails) {
             // 이메일 처리 전에 먼저 잠금 획득 시도
-            EmailQueue lockedEmail = emailQueueService.tryLockEmailInNewTransaction(email, processorId);
+            EmailQueue lockedEmail = emailQueueService.tryLockEmailInNewTransaction(email, generateProcessorId());
 
             if (lockedEmail != null) {
                 CompletableFuture<EmailQueue> future = emailQueueBatchAsyncService.processEmail(lockedEmail);
@@ -299,7 +299,7 @@ public class EmailQueueBatchService implements SmartLifecycle, SchedulingConfigu
      */
     public ProcessorStatus getProcessorStatus() {
         return ProcessorStatus.builder()
-                .processorId(processorId)
+                .processorId(batchServiceProcessorId)
                 .running(running)
                 .startedAt(LocalDateTime.now())
                 .build();

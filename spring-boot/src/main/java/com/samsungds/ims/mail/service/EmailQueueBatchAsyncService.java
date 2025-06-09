@@ -41,14 +41,14 @@ public class EmailQueueBatchAsyncService {
             } else {
                 simulateEmailSending(email);
             }
-            email.setProcessorId(generateProcessorId());
             email.setLocked(false);
+            email.setLockedAt(null);
             email.markAsSent();
             return CompletableFuture.completedFuture(email);
         } catch (Exception e) {
             log.error("이메일 ID {} 발송 실패: {}", email.getId(), e.getMessage());
             email.setLocked(false);
-            email.setProcessorId(generateProcessorId());
+            email.setLockedAt(null);
             email.incrementRetry(e.getMessage());
             return CompletableFuture.completedFuture(email);
         }
