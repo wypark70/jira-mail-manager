@@ -7,7 +7,6 @@ import com.samsungds.ims.mail.repository.EmailQueueRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.subethamail.smtp.MessageContext;
 import org.subethamail.smtp.MessageHandler;
@@ -27,14 +26,11 @@ public class SmtpMessageHandlerFactory implements MessageHandlerFactory {
     private final EmailQueueRecipientRepository emailQueueRecipientRepository;
     private final EmailQueueContentRepository emailQueueContentRepository;
     private final EmailQueueAttachmentRepository emailQueueAttachmentRepository;
-    private final MailSmtpProperties mailSmtpProperties;
-
-    @Value("${mail.smtp.attachment-path:./attachments}")
-    private String attachmentStoragePath;
+    private final SmtpInterceptorProperties smtpInterceptorProperties;
 
     @PostConstruct
     public void init() {
-        log.info("SmtpMessageHandlerFactory initialized. Attachment storage path: {}", attachmentStoragePath);
+        log.info("SmtpMessageHandlerFactory initialized. Attachment storage path: {}", smtpInterceptorProperties.getAttachmentPath());
     }
 
     @Override
@@ -50,7 +46,7 @@ public class SmtpMessageHandlerFactory implements MessageHandlerFactory {
 
         // 연결이 허용된 경우 메시지 핸들러 반환
         log.info("허용된 클라이언트 IP: {}, 도메인: {}", clientIp, domain);
-        return new SmtpMessageHandler(emailQueueRepository, emailQueueRecipientRepository, emailQueueContentRepository, emailQueueAttachmentRepository, mailSmtpProperties);
+        return new SmtpMessageHandler(emailQueueRepository, emailQueueRecipientRepository, emailQueueContentRepository, emailQueueAttachmentRepository, smtpInterceptorProperties);
     }
 
     /**
@@ -90,6 +86,6 @@ public class SmtpMessageHandlerFactory implements MessageHandlerFactory {
      * IP 또는 도메인이 허용되었는지 확인
      */
     private boolean isAllowedConnection(String clientIp, String domain) {
-        return mailSmtpProperties.isAllowedIp(clientIp) || mailSmtpProperties.isAllowedDomain(domain);
+        return smtpInterceptorProperties.isAllowedIp(clientIp) || smtpInterceptorProperties.isAllowedDomain(domain);
     }
 }

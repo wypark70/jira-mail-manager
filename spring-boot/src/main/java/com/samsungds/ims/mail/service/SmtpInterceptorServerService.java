@@ -1,5 +1,6 @@
 package com.samsungds.ims.mail.service;
 
+import com.samsungds.ims.mail.component.SmtpInterceptorProperties;
 import com.samsungds.ims.mail.component.SmtpMessageHandlerFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -8,14 +9,14 @@ import org.subethamail.smtp.server.SMTPServer;
 @Service
 @Slf4j
 public class SmtpInterceptorServerService {
-
-    private static final int SMTP_PORT = 25;
     private final SmtpMessageHandlerFactory messageHandlerFactory;
+    private final SmtpInterceptorProperties smtpInterceptorProperties;
     private SMTPServer smtpServer;
     private boolean running = false;
 
-    public SmtpInterceptorServerService(SmtpMessageHandlerFactory messageHandlerFactory) {
+    public SmtpInterceptorServerService(SmtpMessageHandlerFactory messageHandlerFactory, SmtpInterceptorProperties smtpInterceptorProperties) {
         this.messageHandlerFactory = messageHandlerFactory;
+        this.smtpInterceptorProperties = smtpInterceptorProperties;
     }
 
     public synchronized void startSmtpServer() {
@@ -25,11 +26,12 @@ public class SmtpInterceptorServerService {
         }
 
         try {
+            int port = smtpInterceptorProperties.getPort();
             smtpServer = new SMTPServer(messageHandlerFactory);
-            smtpServer.setPort(SMTP_PORT);
+            smtpServer.setPort(port);
             smtpServer.start();
             running = true;
-            log.info("SMTP 서버가 시작되었습니다. (포트: {})", SMTP_PORT);
+            log.info("SMTP 서버가 시작되었습니다. (포트: {})", port);
         } catch (Exception e) {
             log.error("SMTP 서버 시작 중 오류 발생", e);
             if (smtpServer != null) {

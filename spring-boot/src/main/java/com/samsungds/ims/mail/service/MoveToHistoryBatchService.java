@@ -1,6 +1,6 @@
 package com.samsungds.ims.mail.service;
 
-import com.samsungds.ims.mail.component.MailBatchProperties;
+import com.samsungds.ims.mail.component.MoveToHistoryBatchProperties;
 import com.samsungds.ims.mail.dto.ProcessorStatus;
 import com.samsungds.ims.mail.model.EmailQueue;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ import java.util.UUID;
 public class MoveToHistoryBatchService implements SmartLifecycle, SchedulingConfigurer {
     private final String processorId = generateProcessorId();
     private final EmailHistoryService emailHistoryService;
-    private final MailBatchProperties mailBatchProperties; // MailBatchProperties 주입
+    private final MoveToHistoryBatchProperties moveToHistoryBatchProperties;
     private volatile boolean running = false;
 
     // processorId 생성
@@ -79,7 +79,7 @@ public class MoveToHistoryBatchService implements SmartLifecycle, SchedulingConf
         taskRegistrar.addTriggerTask(
                 this::processMoveToHistory,
                 triggerContext -> {
-                    CronTrigger cronTrigger = new CronTrigger(mailBatchProperties.getMoveToHistoryCron());
+                    CronTrigger cronTrigger = new CronTrigger(moveToHistoryBatchProperties.getScheduleCron());
                     return cronTrigger.nextExecution(triggerContext);
                 }
         );

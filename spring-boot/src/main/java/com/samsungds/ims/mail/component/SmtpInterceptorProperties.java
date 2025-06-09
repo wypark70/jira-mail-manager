@@ -11,16 +11,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-@ConfigurationProperties(prefix = "mail.smtp")
+@ConfigurationProperties(prefix = "mail.smtp-interceptor")
 @RefreshScope
 @Getter
 @Setter
 @ToString
-public class MailSmtpProperties {
+public class SmtpInterceptorProperties {
+    private int port = 25;
     private List<String> allowedIps = new ArrayList<>(List.of("127.0.0.1"));;
     private List<String> allowedDomains = new ArrayList<>(List.of("localhost"));;
     private List<String> allowedEmailDomains = new ArrayList<>(List.of("samsung.com", "partner.samsung.com"));
     private String attachmentPath = "./attachments";
+    private String userApiUrl = "http://localhost:2990/jira/rest/api/2/user/search";
+    private String userApiUsername = "admin";
+    private String userApiPassword = "admin";
 
     public boolean isAllowedIp(String ip) {
         return allowedIps.contains(ip);

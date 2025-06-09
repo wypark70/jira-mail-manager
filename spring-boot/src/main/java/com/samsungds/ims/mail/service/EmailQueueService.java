@@ -1,5 +1,6 @@
 package com.samsungds.ims.mail.service;
 
+import com.samsungds.ims.mail.component.SendMailBatchProperties;
 import com.samsungds.ims.mail.dto.EmailQueueStats;
 import com.samsungds.ims.mail.model.EmailQueue;
 import com.samsungds.ims.mail.repository.EmailQueueRepository;
@@ -23,15 +24,8 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class EmailQueueService {
-
     private final EmailQueueRepository emailQueueRepository;
-
-    @Value("${mail.batch.lock-timeout-minutes:10}")
-    private int lockTimeoutMinutes;
-
-    @Value("${mail.batch.retry-delay-minutes:15}")
-    private int retryDelayMinutes;
-
+    private final SendMailBatchProperties sendMailBatchProperties;
 
     /**
      * 처리할 이메일 목록을 DB에서 조회
@@ -73,7 +67,7 @@ public class EmailQueueService {
      */
     @Transactional
     public void unlockTimedOutEmails() {
-        LocalDateTime timeoutThreshold = LocalDateTime.now().minusMinutes(lockTimeoutMinutes);
+        LocalDateTime timeoutThreshold = LocalDateTime.now().minusMinutes(sendMailBatchProperties.getLockTimeoutMinutes());
         int unlocked = emailQueueRepository.unlockTimedOutEmails(timeoutThreshold);
         log.info("타임아웃된 {} 개의 이메일 잠금이 해제되었습니다", unlocked);
     }
@@ -138,7 +132,7 @@ public class EmailQueueService {
      */
     @Transactional
     public void processRetryEmails() {
-        LocalDateTime retryThreshold = LocalDateTime.now().minusMinutes(retryDelayMinutes);
+        LocalDateTime retryThreshold = LocalDateTime.now().minusMinutes(sendMailBatchProperties.getRetryDelayMinutes());
         List<EmailQueue> retryEmails = emailQueueRepository.findEmailsForRetry(retryThreshold);
         log.info("{}개의 이메일이 재시도 대상입니다", retryEmails.size());
 

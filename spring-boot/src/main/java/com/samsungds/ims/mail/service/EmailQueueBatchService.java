@@ -1,6 +1,6 @@
 package com.samsungds.ims.mail.service;
 
-import com.samsungds.ims.mail.component.MailBatchProperties;
+import com.samsungds.ims.mail.component.SendMailBatchProperties;
 import com.samsungds.ims.mail.dto.ProcessorStatus;
 import com.samsungds.ims.mail.model.EmailQueue;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ public class EmailQueueBatchService implements SmartLifecycle, SchedulingConfigu
     private final EmailQueueBatchAsyncService emailQueueBatchAsyncService;
     private final EmailQueueService emailQueueService;
     private final String processorId = generateProcessorId();
-    private final MailBatchProperties mailBatchProperties;
+    private final SendMailBatchProperties sendMailBatchProperties;
     private volatile boolean running = false;
 
     // processorId 생성 방법
@@ -83,7 +83,7 @@ public class EmailQueueBatchService implements SmartLifecycle, SchedulingConfigu
         taskRegistrar.addTriggerTask(
                 this::processEmailQueue,
                 triggerContext -> {
-                    CronTrigger cronTrigger = new CronTrigger(mailBatchProperties.getQueueProcessingCron());
+                    CronTrigger cronTrigger = new CronTrigger(sendMailBatchProperties.getScheduleCron());
                     return cronTrigger.nextExecution(triggerContext);
                 }
         );
@@ -129,8 +129,8 @@ public class EmailQueueBatchService implements SmartLifecycle, SchedulingConfigu
     private void processQueuedEmails() {
         List<EmailQueue> allProcessedEmails = new ArrayList<>();
         int totalEmailsProcessed = 0;
-        int batchSize = mailBatchProperties.getBatchSize();
-        int concurrentBatchSize = mailBatchProperties.getConcurrentBatchSize();
+        int batchSize = sendMailBatchProperties.getBatchSize();
+        int concurrentBatchSize = sendMailBatchProperties.getConcurrentBatchSize();
 
         for (int batch = 0; batch < batchSize && totalEmailsProcessed < batchSize; batch += concurrentBatchSize) {
             List<EmailQueue> emailsToProcess = emailQueueService.fetchEmailsForProcessing(concurrentBatchSize);

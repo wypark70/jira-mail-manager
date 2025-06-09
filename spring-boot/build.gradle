@@ -47,6 +47,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
+
+    implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16'
+
     implementation 'org.springframework.cloud:spring-cloud-starter'
 
     // Apache
@@ -57,7 +60,6 @@ dependencies {
     implementation 'org.springframework.data:spring-data-rest-hal-explorer'
 
     // Database
-    implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16'
     runtimeOnly 'com.h2database:h2'
 
     // JWT

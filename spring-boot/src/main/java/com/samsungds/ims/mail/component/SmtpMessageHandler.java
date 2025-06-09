@@ -47,7 +47,7 @@ public class SmtpMessageHandler implements MessageHandler {
     private final EmailQueueRecipientRepository emailQueueRecipientRepository;
     private final EmailQueueContentRepository emailQueueContentRepository;
     private final EmailQueueAttachmentRepository emailAttachmentRepository;
-    private final MailSmtpProperties mailSmtpProperties;
+    private final SmtpInterceptorProperties smtpInterceptorProperties;
 
     private String from;
     private final List<String> toRecipients = new ArrayList<>();
@@ -67,7 +67,7 @@ public class SmtpMessageHandler implements MessageHandler {
 
     @Override
     public void data(InputStream data) {
-        if (!mailSmtpProperties.isAllowedEmailDomain(this.from)) {
+        if (!smtpInterceptorProperties.isAllowedEmailDomain(this.from)) {
             log.warn("허용되지 않는 이메일 도메인입니다. (발신자: {})", this.from);
             return;
         }
@@ -191,7 +191,7 @@ public class SmtpMessageHandler implements MessageHandler {
 
     private void addRecipientIfNotExists(String fullRecipientAddress, EmailQueue emailQueue, EmailQueueRecipient.RecipientType type) {
         String recipientEmail = extractEmailAddress(fullRecipientAddress);
-        if (!mailSmtpProperties.isAllowedEmailDomain(recipientEmail)) {
+        if (!smtpInterceptorProperties.isAllowedEmailDomain(recipientEmail)) {
             log.warn("허용되지 않는 이메일 도메인입니다. (수신자: {})", recipientEmail);
             return;
         }
@@ -346,7 +346,7 @@ public class SmtpMessageHandler implements MessageHandler {
                 String sanitizedFileName = sanitizeFileName(originalFileName);
 
                 // 저장 경로 생성 (emailQueue ID별로 하위 디렉토리 사용)
-                Path directoryPath = Paths.get(mailSmtpProperties.getAttachmentPath(), String.valueOf(emailQueue.getId()));
+                Path directoryPath = Paths.get(smtpInterceptorProperties.getAttachmentPath(), String.valueOf(emailQueue.getId()));
                 Files.createDirectories(directoryPath); // 디렉토리가 없으면 생성
 
                 Path filePath = directoryPath.resolve(sanitizedFileName);
@@ -390,8 +390,8 @@ public class SmtpMessageHandler implements MessageHandler {
 
     private String getSenderEmailByUserName(String userName) {
         try {
-            HttpResponse<JsonNode> response = Unirest.get("http://localhost:2990/jira/rest/api/2/user/search")
-                    .basicAuth("admin", "admin")
+            HttpResponse<JsonNode> response = Unirest.get(smtpInterceptorProperties.getUserApiUrl())
+                    .basicAuth(smtpInterceptorProperties.getUserApiUsername(), smtpInterceptorProperties.getUserApiPassword())
                     .queryString("username", userName)
                     .asJson();
             if (response.getStatus() != 200) return null;

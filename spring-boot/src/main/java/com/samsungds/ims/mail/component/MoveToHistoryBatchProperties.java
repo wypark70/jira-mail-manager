@@ -8,16 +8,11 @@ import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConfigurationProperties(prefix = "mail.batch")
+@ConfigurationProperties(prefix = "mail.batch.move-to-history")
 @RefreshScope
 @Getter
 @Setter
 @ToString
-public class MailBatchProperties {
-    private int batchSize = 10;
-    private int concurrentBatchSize = 5;
-    private int lockTimeoutMinutes = 1;
-    private int retryDelayMinutes = 1;
-    private String queueProcessingCron = "0 0/1 * * * ?";
-    private String moveToHistoryCron = "0 0/5 * * * ?";
+public class MoveToHistoryBatchProperties {
+    private String scheduleCron = "0 0/5 * * * ?";
 }

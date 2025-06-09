@@ -1,16 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <!-- 공통 로그 패턴 -->
     <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
 
-    <!-- 콘솔 어펜더 -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>${LOG_PATTERN}</pattern>
         </encoder>
     </appender>
 
-    <!-- 애플리케이션 로그 파일 어펜더 -->
     <appender name="APP_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/application.log</file>
         <encoder>
@@ -25,13 +22,16 @@
 
     <appender name="LOG_SERVICE" class="com.samsungds.ims.mail.appender.LogServiceAppender"/>
 
+    <logger name="log4jdbc.log4j2" level="OFF" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
     <logger name="com.samsungds.ims.mail" level="DEBUG" additivity="false">
         <appender-ref ref="LOG_SERVICE"/>
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="APP_FILE"/>
     </logger>
 
-    <!-- Root 로거 설정 -->
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="APP_FILE"/>

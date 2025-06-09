@@ -1,3 +1,6 @@
+server:
+  port: 2500
+
 spring:
   datasource:
     url: jdbc:log4jdbc:h2:file:./data/mail-manager;AUTO_SERVER=TRUE
@@ -22,51 +25,31 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: update
-    properties:
-      hibernate:
-        show_sql: false
-        format_sql: true
+
   data:
     rest:
       base-path: /api/data
-  thymeleaf:
-    prefix: classpath:/templates/
-    suffix: .html
-    cache: false
-  groovy:
-    template:
-      check-template-location: true
-      prefix: classpath:/templates/
-      suffix: .gsp
-      cache: false
   devtools:
     restart:
       enabled: false
     livereload:
       enabled: false
 
-# SMTP 접근 제어 설정 추가
 mail:
-  smtp:
+  smtp-interceptor:
     allowed-ips: 127.0.0.1,12.127.176.145
     allowed-domains: localhost,jira.samsungds.net
-    allowed-email-domain: samsung.com,partner.samsung.com,partner.sec.co.kr
     attachment-path: ./attachments
+    allowed-email-domains: samsung.com,partner.samsung.com,partner.sec.co.kr
   batch:
-    batch-size: 10
-    concurrent-batch-size: 5
-    lock-timeout-minutes: 1
-    retry-delay-minutes: 1
-
-logging:
-  level:
-    jdbc:
-      sqlonly: OFF
-      sqltiming: OFF
-      resultsettable: OFF
-      audit: OFF
-      resultset: OFF
-      connection: OFF
+    send-mail:
+      batch-size: 10
+      concurrent-batch-size: 5
+      lock-timeout-minutes: 1
+      retry-delay-minutes: 1
+      schedule-cron: "*/20 * * * * *"
+    move-to-history:
+      schedule-cron: "0 */20 * * * *"
 
 management:
   endpoints:

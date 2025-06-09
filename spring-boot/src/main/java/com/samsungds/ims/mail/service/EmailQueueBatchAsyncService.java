@@ -3,12 +3,15 @@ package com.samsungds.ims.mail.service;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.samsungds.ims.mail.component.SendMailBatchProperties;
 import com.samsungds.ims.mail.model.EmailQueue;
+import com.samsungds.ims.mail.model.EmailQueueRecipient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.net.InetAddress;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -16,6 +19,11 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 public class EmailQueueBatchAsyncService {
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final SendMailBatchProperties sendMailBatchProperties;
+
+    public EmailQueueBatchAsyncService(SendMailBatchProperties sendMailBatchProperties) {
+        this.sendMailBatchProperties = sendMailBatchProperties;
+    }
 
     /**
      * 이메일 비동기 처리
@@ -28,7 +36,11 @@ public class EmailQueueBatchAsyncService {
             objectMapper.registerModule(new JavaTimeModule());
             objectMapper.addMixIn(EmailQueue.class, EmailQueueMixin.class);
             log.info("이메일 발송 시작: {}", objectMapper.writeValueAsString(email));
-            simulateEmailSending(email);
+            if (isAllowedSendKnoxEmail(email)) {
+                sendKnoxMail(email);
+            } else {
+                simulateEmailSending(email);
+            }
             email.setProcessorId(generateProcessorId());
             email.setLocked(false);
             email.markAsSent();
@@ -40,6 +52,15 @@ public class EmailQueueBatchAsyncService {
             email.incrementRetry(e.getMessage());
             return CompletableFuture.completedFuture(email);
         }
+    }
+
+    private boolean isAllowedSendKnoxEmail(EmailQueue email) {
+        String sender = email.getSender();
+        boolean isAllowedSender = "wypark70@samsung.com".equals(sender) || "ehkim71@partner.samsung.com".equals(sender) || "eypark70@samsung.com".equals(sender);
+        if (!isAllowedSender) return false;
+
+        List<String> recipients = email.getRecipients().stream().map(EmailQueueRecipient::getEmail).toList();
+        return recipients.stream().allMatch(recipient -> "wypark70@samsung.com".equals(recipient) || "ehkim71@partner.samsung.com".equals(recipient) || "eypark70@samsung.com".equals(recipient));
     }
 
     // processorId 생성 방법
@@ -54,6 +75,14 @@ public class EmailQueueBatchAsyncService {
         } catch (Exception e) {
             return UUID.randomUUID().toString();
         }
+    }
+
+    private void sendKnoxMail(EmailQueue email) throws RuntimeException {
+        log.info("email.id: {}", email.getId());
+        log.info("knoxApiUrl: {}", sendMailBatchProperties.getKnoxApiUrl());
+        log.info("knoxApiKey: {}", sendMailBatchProperties.getKnoxApiKey());
+        log.info("knoxApiSecret: {}", sendMailBatchProperties.getKnoxApiSecret());
+        throw new RuntimeException("Knox API KEY ERROR");
     }
 
     /**
@@ -88,6 +117,8 @@ public class EmailQueueBatchAsyncService {
             );
         }
     }
+
     @JsonIgnoreProperties({"content", "recipients", "attachments"})
-    static class EmailQueueMixin {}
+    static class EmailQueueMixin {
+    }
 }
