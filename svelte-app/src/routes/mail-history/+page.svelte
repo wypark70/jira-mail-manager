@@ -258,7 +258,7 @@
     {#if mailHistoryPage.content.length > 0}
         <Table shadow hoverable={true} class="rounded-lg overflow-hidden">
             <TableHead class="dark:text-white rounded-xl border-b border-black/20">
-                {#each comumns as column}
+                {#each comumns as column (column.name)}
                     <TableHeadCell onclick={() => changeSort(column.name)}>
                         <div class="flex cursor-pointer items-center gap-2 hover:text-blue-600">
                             {column.koName}
@@ -274,7 +274,7 @@
                 {/each}
             </TableHead>
             <TableBody class="dark:text-white">
-                {#each mailHistoryPage.content as mail}
+                {#each mailHistoryPage.content as mail (mail.id)}
                     <TableBodyRow class="border-black/20">
                         <TableBodyCell>{mail.id}</TableBodyCell>
                         <TableBodyCell>
@@ -328,7 +328,7 @@
                     이전
                 </button>
 
-                {#each Array(mailHistoryPage.totalPages) as _, i}
+                {#each Array(mailHistoryPage.totalPages) as _, i (i)}
                     {#if i === pagination.currentPage ||
                     i === 0 ||
                     i === mailHistoryPage.totalPages - 1 ||
@@ -376,7 +376,7 @@
                         onchange={changePageSize}
                         class="ml-4"
                 >
-                    {#each pageSizeOptions as option}
+                    {#each pageSizeOptions as option (option.value)}
                         <option value={option.value}>{option.label}</option>
                     {/each}
                 </Select>

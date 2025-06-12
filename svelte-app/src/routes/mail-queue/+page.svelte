@@ -14,7 +14,6 @@
     } from "flowbite-svelte";
     import {page} from '$app/state';
     import JsonViewer from "$lib/components/JsonViewer.svelte";
-	import type { E } from "vitest/dist/chunks/environment.d.Dmw5ulng.js";
 
     const springApiBaseUrl = import.meta.env.VITE_SPRING_API_BASE_URL;
 
@@ -233,7 +232,7 @@
                         id="status"
                         onchange={applyFilters}
                 >
-                    {#each statusOptions as option}
+                    {#each statusOptions as option (option.value)}
                         <option value={option.value}>{option.label}</option>
                     {/each}
                 </Select>
@@ -296,7 +295,7 @@
         <!-- 테이블 섹션 -->
         <Table shadow hoverable={true} class="rounded-lg overflow-hidden">
             <TableHead class="dark:text-white border-b border-black/20">
-                {#each columns as column}
+                {#each columns as column (column.name)}
                     <TableHeadCell onclick={() => changeSort(column.name)}>
                         <div class="flex cursor-pointer items-center gap-2 hover:text-blue-600">
                             {column.koName}
@@ -318,7 +317,7 @@
                 {/each}
             </TableHead>
             <TableBody class="dark:text-white">
-                {#each mailQueuePage.content as mail}
+                {#each mailQueuePage.content as mail (mail.id)}
                     <!-- 테이블 내용 부분 수정 -->
                     <TableBodyRow class="border-black/20">
                         <TableBodyCell>{mail.id}</TableBodyCell>
@@ -375,7 +374,7 @@
                     이전
                 </button>
 
-                {#each Array(mailQueuePage.totalPages) as _, i}
+                {#each Array(mailQueuePage.totalPages) as _, i (i)}
                     {#if i === pagination.currentPage ||
                     i === 0 ||
                     i === mailQueuePage.totalPages - 1 ||
@@ -423,7 +422,7 @@
                         onchange={changePageSize}
                         class="ml-4"
                 >
-                    {#each pageSizeOptions as option}
+                    {#each pageSizeOptions as option (option.value)}
                         <option value={option.value}>{option.label}</option>
                     {/each}
                 </Select>
