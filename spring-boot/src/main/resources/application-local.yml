@@ -59,7 +59,7 @@ mail:
       knox-api-key:
       knox-api-secret:
     move-to-history:
-      schedule-cron: "0 */20 * * * *"
+      schedule-cron: "0 0 0 L * ?"
 
 management:
   endpoints:

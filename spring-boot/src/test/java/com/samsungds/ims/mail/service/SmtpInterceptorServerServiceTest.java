@@ -21,7 +21,7 @@ import java.util.Random;
 @Slf4j
 class SmtpInterceptorServerServiceTest {
     private static final String SMTP_HOST = "localhost";
-    private static final int SMTP_PORT = 25;
+    private static final int SMTP_PORT = 2588;
     private final Random random = new Random();
 
     @Test

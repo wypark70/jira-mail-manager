@@ -18,7 +18,7 @@ export default defineConfig({
         },
         proxy: {
             '/api': {
-                target: 'http://localhost:8080',
+                target: 'http://localhost:2500',
                 changeOrigin: true, // CORS 문제 해결에 도움이 될 수 있습니다.
                 rewrite: (path) => path.replace(/^\/api/, '/api'), // 요청 경로에서 '/api' 제거
                 // headers: { 'X-Custom-Header': 'foobar' }, // 사용자 정의 헤더 추가

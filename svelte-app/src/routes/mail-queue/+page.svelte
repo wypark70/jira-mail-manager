@@ -52,12 +52,12 @@
     }
 
     // 검색 필터에 날짜 범위 추가
-    let searchFilters: SearchFilters = {
+    let searchFilters = $state<SearchFilters>({
         status: page.url.searchParams.get('status') || '',
         subject: '',
         startDate: undefined,  // 시작일
         endDate: undefined     // 종료일
-    };
+    });
 
     // 상태 옵션 정의
     const statusOptions = [
@@ -67,12 +67,12 @@
         {value: 'FAILED', label: 'FAILED'}
     ];
 
-    let pagination: PaginationState = {
+    let pagination = $state<PaginationState>({
         currentPage: 0,
         pageSize: 10,
         sortBy: 'createdAt',
         sortDirection: 'desc'
-    };
+    });
 
     const pageSizeOptions = [
         {value: 5, label: '5개씩 보기'},
@@ -81,24 +81,24 @@
         {value: 50, label: '50개씩 보기'}
     ];
 
-    let mailQueuePage: PageResponse<EmailQueue> = {
+    let mailQueuePage = $state<PageResponse<EmailQueue>>({
         content: [],
         totalPages: 0,
         totalElements: 0,
         currentPage: 0
-    };
+    });
 
     let columns = [
-        {name: 'ID', koName: 'ID'},
-        {name: 'subject', koName: '제목'},
-        {name: 'sender', koName: '발신자'},
-        {name: 'status', koName: '상태'},
-        {name: 'createdAt', koName: '생성일'}
+        {name: 'ID', koName: 'ID', class: 'w-[10%]'},
+        {name: 'subject', koName: '제목', class: 'w-[50%]'},
+        {name: 'sender', koName: '발신자', class: 'w-[15%]'},
+        {name: 'status', koName: '상태', class: 'w-[10%]'},
+        {name: 'createdAt', koName: '생성일', class: 'w-[15%]'}
     ];
 
     // 모달 상태 관리
-    let showModal = false;
-    let selectedMail: EmailQueue | null = null;
+    let showModal = $state(false);
+    let selectedMail = $state<EmailQueue | null>(null);
 
     // loadMailQueue 함수 수정
     async function loadMailQueue(): Promise<void> {
@@ -143,34 +143,34 @@
 
 
     // 필터 초기화 함수 수정
-    async function resetFilters(): Promise<void> {
+    function resetFilters(): void {
         searchFilters.status = '';
         searchFilters.subject = '';
         searchFilters.startDate = undefined
         searchFilters.endDate = undefined;
-        await applyFilters();
+        applyFilters(); // pagination.currentPage will be set to 0, triggering effect
     }
 
-    async function changePage(newPage: number): Promise<void> {
+    function changePage(newPage: number): void {
         pagination.currentPage = newPage;
-        await loadMailQueue();
+        // $effect will call loadMailQueue
     }
 
-    async function changePageSize(event: Event): Promise<void> {
+    function changePageSize(event: Event): void {
         const select = event.target as HTMLSelectElement;
         pagination.pageSize = parseInt(select.value);
         pagination.currentPage = 0; // 페이지 크기 변경시 첫 페이지로 이동
-        await loadMailQueue();
+        // $effect will call loadMailQueue
     }
 
-    async function changeSort(column: string): Promise<void> {
+    function changeSort(column: string): void {
         if (pagination.sortBy === column) {
             pagination.sortDirection = pagination.sortDirection === 'asc' ? 'desc' : 'asc';
         } else {
             pagination.sortBy = column;
             pagination.sortDirection = 'asc';
         }
-        await loadMailQueue();
+        // $effect will call loadMailQueue
     }
 
     // 메일 상세 정보를 가져오는 함수
@@ -185,9 +185,9 @@
     }
 
     // 필터 적용 함수 수정
-    async function applyFilters(): Promise<void> {
+    function applyFilters(): void {
         pagination.currentPage = 0;
-        await loadMailQueue();
+        // $effect will call loadMailQueue
     }
 
     function escapeHTML(str: string): string {
@@ -206,8 +206,10 @@
         };
     }
 
-    // 초기 데이터 로드
-    loadMailQueue();
+    // 초기 데이터 로드 및 필터/페이지네이션 변경 시 데이터 리로드
+    $effect(() => {
+        loadMailQueue();
+    });
 </script>
 
 <svelte:head>
@@ -293,10 +295,10 @@
 
     {#if mailQueuePage.content.length > 0}
         <!-- 테이블 섹션 -->
-        <Table shadow hoverable={true} class="rounded-lg overflow-hidden">
+        <Table shadow hoverable={true} class="rounded-lg overflow-hidden" style="table-layout: fixed;">
             <TableHead class="dark:text-white border-b border-black/20">
                 {#each columns as column (column.name)}
-                    <TableHeadCell onclick={() => changeSort(column.name)}>
+                    <TableHeadCell class={'whitespace-nowrap ' + column.class} onclick={() => changeSort(column.name)}>
                         <div class="flex cursor-pointer items-center gap-2 hover:text-blue-600">
                             {column.koName}
                             {#if pagination.sortBy === column.name}
@@ -318,21 +320,19 @@
             </TableHead>
             <TableBody class="dark:text-white">
                 {#each mailQueuePage.content as mail (mail.id)}
-                    <!-- 테이블 내용 부분 수정 -->
                     <TableBodyRow class="border-black/20">
-                        <TableBodyCell>{mail.id}</TableBodyCell>
-                        <TableBodyCell>
-                            <!-- 제목을 클릭 가능한 버튼으로 변경 -->
+                        <TableBodyCell class={"truncate " + columns[0].class}>{mail.id}</TableBodyCell>
+                        <TableBodyCell class={"truncate " + columns[1].class}>
                             <button
-                                    class="text-left hover:text-blue-600 dark:hover:text-blue-400"
-                                    on:click={() => fetchMailDetail(mail.id)}
+                                    class="text-left hover:text-blue-600 dark:hover:text-blue-400 truncate max-w-full"
+                                    onclick={() => fetchMailDetail(mail.id)}
                             >
                                 {mail.subject}
                             </button>
                         </TableBodyCell>
-                        <TableBodyCell>{mail.sender}</TableBodyCell>
-                        <TableBodyCell>{mail.status}</TableBodyCell>
-                        <TableBodyCell>{new Date(mail.createdAt).toLocaleString()}</TableBodyCell>
+                        <TableBodyCell class={"truncate " + columns[2].class}>{mail.sender}</TableBodyCell>
+                        <TableBodyCell class={"truncate " + columns[3].class}>{mail.status}</TableBodyCell>
+                        <TableBodyCell class={"truncate " + columns[4].class}>{new Date(mail.createdAt).toLocaleString()}</TableBodyCell>
                     </TableBodyRow>
                 {/each}
             </TableBody>
@@ -356,7 +356,7 @@
                 <button
                         class="relative inline-flex items-center rounded-l-md px-2 py-2  ring-1 ring-inset focus:z-20 focus:outline-offset-0 disabled:text-gray-500/50"
                         disabled={pagination.currentPage === 0}
-                        on:click={() => changePage(0)}
+                        onclick={() => changePage(0)}
                 >
                     <span class="sr-only">처음으로</span>
                     <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -369,7 +369,7 @@
                 <button
                         class="relative inline-flex items-center px-3 py-2 text-sm font-medium  ring-1 ring-inset focus:z-20 focus:outline-offset-0 disabled:text-gray-500/50"
                         disabled={pagination.currentPage === 0}
-                        on:click={() => changePage(pagination.currentPage - 1)}
+                        onclick={() => changePage(pagination.currentPage - 1)}
                 >
                     이전
                 </button>
@@ -385,7 +385,7 @@
                                     ? 'z-10 bg-gray-300 dark:bg-gray-700'
                                     : 'focus:z-20 focus:outline-offset-0'
                             }"
-                                on:click={() => changePage(i)}
+                                onclick={() => changePage(i)}
                                 aria-current={pagination.currentPage === i ? 'page' : undefined}
                         >
                             {i + 1}
@@ -400,7 +400,7 @@
                 <button
                         class="relative inline-flex items-center px-3 py-2 text-sm font-medium ring-1 ring-inset focus:z-20 focus:outline-offset-0 disabled:text-gray-500/50"
                         disabled={pagination.currentPage === mailQueuePage.totalPages - 1}
-                        on:click={() => changePage(pagination.currentPage + 1)}
+                        onclick={() => changePage(pagination.currentPage + 1)}
                 >
                     다음
                 </button>
@@ -408,7 +408,7 @@
                 <button
                         class="relative inline-flex items-center rounded-r-md px-2 py-2 ring-1 ring-inset focus:z-20 focus:outline-offset-0 disabled:text-gray-500/50"
                         disabled={pagination.currentPage === mailQueuePage.totalPages - 1}
-                        on:click={() => changePage(mailQueuePage.totalPages - 1)}
+                        onclick={() => changePage(mailQueuePage.totalPages - 1)}
                 >
                     <span class="sr-only">마지막으로</span>
                     <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

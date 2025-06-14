@@ -52,18 +52,18 @@
         sortDirection: string;
     }
 
-    let searchFilters: SearchFilters = {
+    let searchFilters = $state<SearchFilters>({
         subject: '',
         startDate: undefined,
         endDate: undefined
-    };
+    });
 
-    let pagination: PaginationState = {
+    let pagination = $state<PaginationState>({
         currentPage: 0,
         pageSize: 10,
         sortBy: 'sentAt',
         sortDirection: 'desc'
-    };
+    });
 
     const pageSizeOptions = [
         {value: 5, label: '5개씩 보기'},
@@ -72,23 +72,23 @@
         {value: 50, label: '50개씩 보기'}
     ];
 
-    let mailHistoryPage: PageResponse<EmailHistory> = {
+    let mailHistoryPage = $state<PageResponse<EmailHistory>>({
         content: [],
         totalPages: 0,
         totalElements: 0,
         currentPage: 0
-    };
+    });
 
-    let comumns = [
-        { name: 'id', koName: 'ID' },
-        { name: 'subject', koName: '제목' },
-        { name: 'sender', koName: '발신자' },
-        { name: 'sentAt', koName: '발신일' }
+    let columns = [
+        { name: 'id', koName: 'ID', class: 'w-[10%]' },
+        { name: 'subject', koName: '제목', class: 'w-[50%]' },
+        { name: 'sender', koName: '발신자', class: 'w-[20%]' },
+        { name: 'sentAt', koName: '발신일', class: 'w-[20%]' }
     ];
 
     // 모달 상태 관리
-    let showModal = false;
-    let selectedMail: EmailHistory | null = null;
+    let showModal = $state(false);
+    let selectedMail = $state<EmailHistory | null>(null);
 
     async function loadMailHistory(): Promise<void> {
         const {currentPage, pageSize, sortBy, sortDirection} = pagination;
@@ -186,8 +186,10 @@
         };
     }
 
-    // 초기 데이터 로드
-    loadMailHistory();
+    // 초기 데이터 로드 및 필터/페이지네이션 변경 시 데이터 리로드
+    $effect(() => {
+        loadMailHistory();
+    });
 </script>
 
 <svelte:head>
@@ -256,10 +258,10 @@
     </div>
 
     {#if mailHistoryPage.content.length > 0}
-        <Table shadow hoverable={true} class="rounded-lg overflow-hidden">
+        <Table shadow hoverable={true} class="rounded-lg overflow-hidden w-full" style="table-layout: fixed;">
             <TableHead class="dark:text-white rounded-xl border-b border-black/20">
-                {#each comumns as column (column.name)}
-                    <TableHeadCell onclick={() => changeSort(column.name)}>
+                {#each columns as column (column.name)}
+                    <TableHeadCell class="whitespace-nowrap {column.class}" onclick={() => changeSort(column.name)}>
                         <div class="flex cursor-pointer items-center gap-2 hover:text-blue-600">
                             {column.koName}
                             {#if pagination.sortBy === column.name}
@@ -276,17 +278,18 @@
             <TableBody class="dark:text-white">
                 {#each mailHistoryPage.content as mail (mail.id)}
                     <TableBodyRow class="border-black/20">
-                        <TableBodyCell>{mail.id}</TableBodyCell>
-                        <TableBodyCell>
-                            <button
-                                    class="text-left hover:text-blue-600 dark:hover:text-blue-400"
-                                    on:click={() => fetchMailDetail(mail.id)}
-                            >
-                                {mail.subject}
-                            </button>
+                        <TableBodyCell class="truncate {columns[0].class}">{mail.id}</TableBodyCell>
+                        <TableBodyCell class={columns[1].class}>
+                        <button
+                                type="button"
+                                class="text-left hover:text-blue-600 dark:hover:text-blue-400 truncate max-w-full"
+                                onclick={() => fetchMailDetail(mail.id)}
+                        >
+                            {mail.subject}
+                        </button>
                         </TableBodyCell>
-                        <TableBodyCell>{mail.sender}</TableBodyCell>
-                        <TableBodyCell>{new Date(mail.sentAt).toLocaleString()}</TableBodyCell>
+                        <TableBodyCell class="truncate {columns[2].class}">{mail.sender}</TableBodyCell>
+                        <TableBodyCell class="truncate {columns[3].class}">{new Date(mail.sentAt).toLocaleString()}</TableBodyCell>
                     </TableBodyRow>
                 {/each}
             </TableBody>
@@ -310,7 +313,7 @@
                 <button
                         class="relative inline-flex items-center rounded-l-md px-2 py-2  ring-1 ring-inset focus:z-20 focus:outline-offset-0 disabled:text-gray-500/50"
                         disabled={pagination.currentPage === 0}
-                        on:click={() => changePage(0)}
+                        onclick={() => changePage(0)}
                 >
                     <span class="sr-only">처음으로</span>
                     <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -323,7 +326,7 @@
                 <button
                         class="relative inline-flex items-center px-3 py-2 text-sm font-medium  ring-1 ring-inset focus:z-20 focus:outline-offset-0 disabled:text-gray-500/50"
                         disabled={pagination.currentPage === 0}
-                        on:click={() => changePage(pagination.currentPage - 1)}
+                        onclick={() => changePage(pagination.currentPage - 1)}
                 >
                     이전
                 </button>
@@ -339,7 +342,7 @@
                                     ? 'z-10 bg-gray-300 dark:bg-gray-700'
                                     : 'focus:z-20 focus:outline-offset-0'
                             }"
-                                on:click={() => changePage(i)}
+                                onclick={() => changePage(i)}
                                 aria-current={pagination.currentPage === i ? 'page' : undefined}
                         >
                             {i + 1}
@@ -354,7 +357,7 @@
                 <button
                         class="relative inline-flex items-center px-3 py-2 text-sm font-medium ring-1 ring-inset focus:z-20 focus:outline-offset-0 disabled:text-gray-500/50"
                         disabled={pagination.currentPage === mailHistoryPage.totalPages - 1}
-                        on:click={() => changePage(pagination.currentPage + 1)}
+                        onclick={() => changePage(pagination.currentPage + 1)}
                 >
                     다음
                 </button>
@@ -362,7 +365,7 @@
                 <button
                         class="relative inline-flex items-center rounded-r-md px-2 py-2 ring-1 ring-inset focus:z-20 focus:outline-offset-0 disabled:text-gray-500/50"
                         disabled={pagination.currentPage === mailHistoryPage.totalPages - 1}
-                        on:click={() => changePage(mailHistoryPage.totalPages - 1)}
+                        onclick={() => changePage(mailHistoryPage.totalPages - 1)}
                 >
                     <span class="sr-only">마지막으로</span>
                     <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
